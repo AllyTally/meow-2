@@ -2,7 +2,7 @@
 
 --music = "field_of_hopes" -- The music you want to load!
 
-map = "ruins3"
+map = "ruinstest"
 
 function OverworldStarting()
     -- Do something here! This is called after the Overworld module is initialized.

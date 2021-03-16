@@ -142,7 +142,7 @@ return (function()
         event.internalname = object.name
 
         event.x = object.x * self.mapdata.scale.x
-        event.y = (240 * self.mapdata.scale.y) - (object.y * self.mapdata.scale.y) - (object.height * self.mapdata.scale.y)
+        event.y = ((self.tilemapdata.height * self.tilemapdata.tileheight) * self.mapdata.scale.y) - (object.y * self.mapdata.scale.y) - (object.height * self.mapdata.scale.y)
 
         event.data = object
         event.properties = object.properties
@@ -341,7 +341,7 @@ return (function()
                     if object.shape == "rectangle" then
                         self.DEBUG("Rectangle collision found at (" .. object.x * self.mapdata.scale.x .. ", " .. object.y * self.mapdata.scale.y .. ")")
 
-                        local flipped_y = (240 - object.y)
+                        local flipped_y = ((self.tilemapdata.height * self.tilemapdata.tileheight) - object.y)
 
                         local x  = (object.x) * self.mapdata.scale.x
                         local x2 = (object.x + object.width) * self.mapdata.scale.x
@@ -361,7 +361,7 @@ return (function()
                         local y1 = (-object.polygon[1]["y"])*self.mapdata.scale.y
                         local y2 = (-object.polygon[2]["y"])*self.mapdata.scale.y
                         local y3 = (-object.polygon[3]["y"])*self.mapdata.scale.y
-                        local y4 = (240 - object.y)*self.mapdata.scale.y
+                        local y4 = ((self.tilemapdata.height * self.tilemapdata.tileheight) - object.y)*self.mapdata.scale.y
                         --local y4 = object.y * 2
 
                         self.DEBUG("(" .. x4 .. "," .. y4 .. ")")
@@ -456,7 +456,7 @@ return (function()
         self.player = dofile(modpath.modPath .. "/Players/" .. playername .. "/player.lua")
 
         self.player.x = self.playerstart[1] * self.mapdata.scale.x
-        self.player.y = (240 * self.mapdata.scale.y) - self.playerstart[2] * self.mapdata.scale.y
+        self.player.y = ((self.tilemapdata.height * self.tilemapdata.tileheight) * self.mapdata.scale.y) - self.playerstart[2] * self.mapdata.scale.y
         -- Misc.MoveCameraTo(self.player.x,self.player.y)
 
         local spritepath = self.player.animations.IdleDown[4] .. "/" .. self.player.animations.IdleDown[1][1]
