@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.4" tiledversion="1.4.3" orientation="orthogonal" renderorder="right-down" width="38" height="12" tilewidth="20" tileheight="20" infinite="0" nextlayerid="8" nextobjectid="325">
+<map version="1.4" tiledversion="1.4.3" orientation="orthogonal" renderorder="right-down" width="38" height="12" tilewidth="20" tileheight="20" infinite="0" nextlayerid="8" nextobjectid="333">
  <editorsettings>
   <export target="tiledata.lua" format="lua"/>
  </editorsettings>
@@ -28,8 +28,8 @@
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,87,0,0,87,0,0,0,0,93,96,0,0,0,0,0,87,0,0,0,0,0,0,0,0,0,93,95,96,0,0,0,
-0,0,0,0,0,0,0,87,0,0,87,0,0,0,0,93,96,0,0,37,0,0,87,0,0,0,0,0,37,37,0,0,93,95,96,0,0,0,
-0,0,0,0,0,0,0,87,0,0,87,0,0,0,0,93,96,0,37,37,0,0,87,0,0,0,0,0,0,0,0,0,93,94,96,0,0,0,
+0,0,0,0,0,0,0,87,0,0,87,0,0,0,0,93,96,0,0,0,0,0,87,0,0,0,0,0,0,0,0,0,93,95,96,0,0,0,
+0,0,0,0,0,0,0,87,0,0,87,0,0,0,0,93,96,0,0,0,0,0,87,0,0,0,0,0,0,0,0,0,93,94,96,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -40,7 +40,7 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
- <objectgroup id="4" name="collision">
+ <objectgroup id="4" name="collision" visible="0">
   <object id="311" x="160" y="220" width="560" height="20"/>
   <object id="312" x="720" y="180" width="40" height="40"/>
   <object id="313" x="720" y="80" width="40" height="60"/>
@@ -51,8 +51,14 @@
   <object id="320" x="480" y="180" width="40" height="40"/>
   <object id="323" x="20" y="80" width="20" height="140"/>
   <object id="324" x="40" y="220" width="80" height="20"/>
+  <object id="328" name="wallswitch" x="594.625" y="59" width="7" height="15"/>
  </objectgroup>
  <objectgroup id="5" name="events">
   <object id="309" name="start" x="140" y="200"/>
+  <object id="326" name="wallswitch" x="389" y="55" width="7" height="15"/>
+  <object id="327" name="wallswitch" x="589" y="55" width="7" height="15"/>
+  <object id="329" name="wallswitch" x="629" y="55" width="7" height="15"/>
+  <object id="330" name="tornote" x="360" y="45" width="37" height="27"/>
+  <object id="332" name="tornote" x="560" y="45" width="37" height="27"/>
  </objectgroup>
 </map>

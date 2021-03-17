@@ -92,10 +92,10 @@ return (function()
             for tile_id = #self.tile_layers[layer_id], 1, -1 do
                 local tile = self.tile_layers[layer_id][tile_id]
 
-                if (tile.x > self.camera_pos_x - 40) and
+                if (tile.x > self.camera_pos_x - (self.tilemapdata.tilewidth * self.mapdata.scale.x)) and
                    (tile.x < self.camera_pos_x + 640) and
                    (tile.y > self.camera_pos_y) and
-                   (tile.y < self.camera_pos_y + 480 + 40) then
+                   (tile.y < self.camera_pos_y + 480 + (self.tilemapdata.tileheight * self.mapdata.scale.y)) then
                     if not tile.sprite then
                         tile.sprite = self.CreateTileSprite(tile.tileset,tile.id,tile.x,tile.y,self.mapdata.internalname)
                     end
@@ -217,6 +217,7 @@ return (function()
 
                     if self.isColliding(player_rect, event_rect) then
                         event.OnInteract()
+                        break
                     end
                 end
             end

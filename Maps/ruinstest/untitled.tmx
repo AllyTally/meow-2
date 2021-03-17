@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.4" tiledversion="1.4.3" orientation="orthogonal" renderorder="right-down" width="16" height="24" tilewidth="20" tileheight="20" infinite="0" nextlayerid="6" nextobjectid="11">
+<map version="1.4" tiledversion="1.4.3" orientation="orthogonal" renderorder="right-down" width="16" height="24" tilewidth="20" tileheight="20" infinite="0" nextlayerid="6" nextobjectid="91">
  <editorsettings>
   <export target="tiledata.lua" format="lua"/>
  </editorsettings>

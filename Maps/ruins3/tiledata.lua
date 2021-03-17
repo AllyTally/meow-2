@@ -9,7 +9,7 @@ return {
   tilewidth = 20,
   tileheight = 20,
   nextlayerid = 8,
-  nextobjectid = 325,
+  nextobjectid = 333,
   properties = {},
   tilesets = {
     {
@@ -388,8 +388,8 @@ return {
       data = {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 87, 0, 0, 87, 0, 0, 0, 0, 93, 96, 0, 0, 0, 0, 0, 87, 0, 0, 0, 0, 0, 0, 0, 0, 0, 93, 95, 96, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 87, 0, 0, 87, 0, 0, 0, 0, 93, 96, 0, 0, 37, 0, 0, 87, 0, 0, 0, 0, 0, 37, 37, 0, 0, 93, 95, 96, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 87, 0, 0, 87, 0, 0, 0, 0, 93, 96, 0, 37, 37, 0, 0, 87, 0, 0, 0, 0, 0, 0, 0, 0, 0, 93, 94, 96, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 87, 0, 0, 87, 0, 0, 0, 0, 93, 96, 0, 0, 0, 0, 0, 87, 0, 0, 0, 0, 0, 0, 0, 0, 0, 93, 95, 96, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 87, 0, 0, 87, 0, 0, 0, 0, 93, 96, 0, 0, 0, 0, 0, 87, 0, 0, 0, 0, 0, 0, 0, 0, 0, 93, 94, 96, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -405,7 +405,7 @@ return {
       draworder = "topdown",
       id = 4,
       name = "collision",
-      visible = true,
+      visible = false,
       opacity = 1,
       offsetx = 0,
       offsety = 0,
@@ -540,6 +540,19 @@ return {
           rotation = 0,
           visible = true,
           properties = {}
+        },
+        {
+          id = 328,
+          name = "wallswitch",
+          type = "",
+          shape = "rectangle",
+          x = 594.625,
+          y = 59,
+          width = 7,
+          height = 15,
+          rotation = 0,
+          visible = true,
+          properties = {}
         }
       }
     },
@@ -563,6 +576,71 @@ return {
           y = 200,
           width = 0,
           height = 0,
+          rotation = 0,
+          visible = true,
+          properties = {}
+        },
+        {
+          id = 326,
+          name = "wallswitch",
+          type = "",
+          shape = "rectangle",
+          x = 389,
+          y = 55,
+          width = 7,
+          height = 15,
+          rotation = 0,
+          visible = true,
+          properties = {}
+        },
+        {
+          id = 327,
+          name = "wallswitch",
+          type = "",
+          shape = "rectangle",
+          x = 589,
+          y = 55,
+          width = 7,
+          height = 15,
+          rotation = 0,
+          visible = true,
+          properties = {}
+        },
+        {
+          id = 329,
+          name = "wallswitch",
+          type = "",
+          shape = "rectangle",
+          x = 629,
+          y = 55,
+          width = 7,
+          height = 15,
+          rotation = 0,
+          visible = true,
+          properties = {}
+        },
+        {
+          id = 330,
+          name = "tornote",
+          type = "",
+          shape = "rectangle",
+          x = 360,
+          y = 45,
+          width = 37,
+          height = 27,
+          rotation = 0,
+          visible = true,
+          properties = {}
+        },
+        {
+          id = 332,
+          name = "tornote",
+          type = "",
+          shape = "rectangle",
+          x = 560,
+          y = 45,
+          width = 37,
+          height = 27,
           rotation = 0,
           visible = true,
           properties = {}
