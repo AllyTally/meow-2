@@ -275,6 +275,7 @@ function self.FormatText(tab)
         textToDisplay = ""
 		local startingColor = "ffffff"
         local skip = 0
+        local asteriskVoiceString = "[voice:" .. self.voice .. "]"
 
         for i = 1, #str do
             if skip > 0 then
@@ -285,13 +286,17 @@ function self.FormatText(tab)
                     local command = str:sub(i, str:find("%]", i))
                     skip = #command - 1
 
-					if string.startsWith(command, "[co") and #textToDisplay == 0 then
-						startingColor = command:sub(8,-2)
-					end
+                    if string.startsWith(command, "[co") and #textToDisplay == 0 then
+                        startingColor = command:sub(8,-2)
+                    elseif string.startsWith(command, "[voice:") then
+                        asteriskVoiceString = "[voice:" .. command:sub(8, -2) .. "]"
+                    elseif command == "[novoice]" then
+                        asteriskVoiceString = "[novoice]"
+                    end
 
                     textToDisplay = textToDisplay .. ((string.startsWith(command, "[w") or string.startsWith(command, "[i") or string.startsWith(command, "[ne") or string.startsWith(command, "[co")) and command or "")
                 elseif char == "\n" then
-                    textToDisplay = textToDisplay .. "\n[alpha:ff][voice:" .. self.voice .. "]* [novoice][alpha:00]"
+                    textToDisplay = textToDisplay .. "\n[alpha:ff]" .. asteriskVoiceString .. "* [novoice][alpha:00]"
                 elseif char == "\r" then
                     textToDisplay = textToDisplay .. "\n"
                 else
