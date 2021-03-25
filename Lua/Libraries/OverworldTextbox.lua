@@ -274,6 +274,8 @@ function self.FormatText(tab)
         -- format for * only
         textToDisplay = ""
 		local startingColor = "ffffff"
+		local startingVoice = self.voice
+		local startingFont  = self.font
         local skip = 0
         local asteriskVoiceString = "[voice:" .. self.voice .. "]"
 
@@ -288,8 +290,15 @@ function self.FormatText(tab)
 
                     if string.startsWith(command, "[co") and #textToDisplay == 0 then
                         startingColor = command:sub(8,-2)
+                    elseif string.startsWith(command, "[font:") then
+                        if #textToDisplay == 0 then
+                            startingFont = command:sub(7, -2)
+                        end
                     elseif string.startsWith(command, "[voice:") then
                         asteriskVoiceString = "[voice:" .. command:sub(8, -2) .. "]"
+                        if #textToDisplay == 0 then
+                            startingVoice = command:sub(8, -2)
+                        end
                     elseif command == "[novoice]" then
                         asteriskVoiceString = "[novoice]"
                     end
@@ -305,8 +314,8 @@ function self.FormatText(tab)
             end
         end
 
-        textToDisplay = "[color:" .. startingColor .. "][voice:" .. self.voice .. "]* [novoice][alpha:00]" .. textToDisplay
-        table.insert(textStarsTable, "[noskip][font:" .. self.font .. "][novoice]" .. self.effect .. "[color:ffffff][noskip:off]" .. textToDisplay)
+        textToDisplay = "[color:" .. startingColor .. "][voice:" .. startingVoice .. "]* [novoice][alpha:00]" .. textToDisplay
+        table.insert(textStarsTable, "[noskip][font:" .. startingFont .. "][novoice]" .. self.effect .. "[color:ffffff][noskip:off]" .. textToDisplay)
     end
 
     return textStarsTable, textTable
