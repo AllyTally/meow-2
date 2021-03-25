@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.4" tiledversion="1.4.3" orientation="orthogonal" renderorder="right-down" width="16" height="12" tilewidth="20" tileheight="20" infinite="0" nextlayerid="7" nextobjectid="314">
+<map version="1.4" tiledversion="1.4.3" orientation="orthogonal" renderorder="right-down" width="16" height="12" tilewidth="20" tileheight="20" infinite="0" nextlayerid="7" nextobjectid="325">
  <editorsettings>
   <export target="tiledata.lua" format="lua"/>
  </editorsettings>
@@ -90,8 +90,43 @@
     <property name="good" type="bool" value="true"/>
    </properties>
   </object>
-  <object id="307" name="wallswitch" x="206" y="53" width="7" height="15"/>
-  <object id="308" name="largedoor" x="123" y="22" width="34" height="56"/>
+  <object id="307" name="wallswitch" x="210" y="58" width="7" height="15"/>
+  <object id="308" name="largedoor" x="123" y="24" width="34" height="56"/>
   <object id="309" name="start" x="160" y="200"/>
+  <object id="316" name="readable" x="80" y="60" width="20" height="20">
+   <properties>
+    <property name="text">Only the fearless may proceed.
+Brave ones, foolish ones.
+Both walk not the middle road.</property>
+   </properties>
+  </object>
+  <object id="317" name="door" x="140" y="60" width="20" height="20">
+   <properties>
+    <property name="map" value="ruins3"/>
+    <property name="x" type="int" value="130"/>
+    <property name="y" type="int" value="20"/>
+   </properties>
+  </object>
+  <object id="318" name="door" x="120" y="60" width="20" height="20">
+   <properties>
+    <property name="map" value="ruins3"/>
+    <property name="x" type="int" value="130"/>
+    <property name="y" type="int" value="20"/>
+   </properties>
+  </object>
+  <object id="323" name="door" x="140" y="220" width="20" height="20">
+   <properties>
+    <property name="map" value="ruins1"/>
+    <property name="x" type="int" value="150"/>
+    <property name="y" type="int" value="340"/>
+   </properties>
+  </object>
+  <object id="324" name="door" x="160" y="220" width="20" height="20">
+   <properties>
+    <property name="map" value="ruins1"/>
+    <property name="x" type="int" value="150"/>
+    <property name="y" type="int" value="340"/>
+   </properties>
+  </object>
  </objectgroup>
 </map>

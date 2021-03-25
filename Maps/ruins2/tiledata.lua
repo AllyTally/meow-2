@@ -9,7 +9,7 @@ return {
   tilewidth = 20,
   tileheight = 20,
   nextlayerid = 7,
-  nextobjectid = 314,
+  nextobjectid = 325,
   properties = {},
   tilesets = {
     {
@@ -459,8 +459,8 @@ return {
           name = "wallswitch",
           type = "",
           shape = "rectangle",
-          x = 206,
-          y = 53,
+          x = 210,
+          y = 58,
           width = 7,
           height = 15,
           rotation = 0,
@@ -473,7 +473,7 @@ return {
           type = "",
           shape = "rectangle",
           x = 123,
-          y = 22,
+          y = 24,
           width = 34,
           height = 56,
           rotation = 0,
@@ -494,17 +494,87 @@ return {
           properties = {}
         },
         {
-          id = 313,
-          name = "button",
+          id = 316,
+          name = "readable",
           type = "",
           shape = "rectangle",
-          x = 115.5,
-          y = 128.5,
-          width = 0,
-          height = 0,
+          x = 80,
+          y = 60,
+          width = 20,
+          height = 20,
           rotation = 0,
           visible = true,
-          properties = {}
+          properties = {
+            ["text"] = "Only the fearless may proceed.\nBrave ones, foolish ones.\nBoth walk not the middle road."
+          }
+        },
+        {
+          id = 317,
+          name = "door",
+          type = "",
+          shape = "rectangle",
+          x = 140,
+          y = 60,
+          width = 20,
+          height = 20,
+          rotation = 0,
+          visible = true,
+          properties = {
+            ["map"] = "ruins3",
+            ["x"] = 130,
+            ["y"] = 20
+          }
+        },
+        {
+          id = 318,
+          name = "door",
+          type = "",
+          shape = "rectangle",
+          x = 120,
+          y = 60,
+          width = 20,
+          height = 20,
+          rotation = 0,
+          visible = true,
+          properties = {
+            ["map"] = "ruins3",
+            ["x"] = 130,
+            ["y"] = 20
+          }
+        },
+        {
+          id = 323,
+          name = "door",
+          type = "",
+          shape = "rectangle",
+          x = 140,
+          y = 220,
+          width = 20,
+          height = 20,
+          rotation = 0,
+          visible = true,
+          properties = {
+            ["map"] = "ruins1",
+            ["x"] = 150,
+            ["y"] = 340
+          }
+        },
+        {
+          id = 324,
+          name = "door",
+          type = "",
+          shape = "rectangle",
+          x = 160,
+          y = 220,
+          width = 20,
+          height = 20,
+          rotation = 0,
+          visible = true,
+          properties = {
+            ["map"] = "ruins1",
+            ["x"] = 150,
+            ["y"] = 340
+          }
         }
       }
     }

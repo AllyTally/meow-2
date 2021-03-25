@@ -6,6 +6,9 @@ return (function()
         enemies = { }
     end
 
+    self.debug_mode = true
+    self.debug_ignore_collision = false
+
     -- Initializes the library
     local _EncounterStarting = EncounterStarting
     function EncounterStarting()
@@ -14,7 +17,14 @@ return (function()
         -- Create the layers used in this module
         CreateLayer("OWBackground", "Top")
         CreateLayer("Tiles", "OWBackground")
-        CreateLayer("Objects", "Tiles")
+        CreateLayer("Tiles2", "Tiles")
+        CreateLayer("Objects", "Tiles2")
+        CreateLayer("Player", "Objects")
+        CreateLayer("Textbox","Player")
+        CreateLayer("Fader","Textbox")
+
+        OverworldTextbox = require "OverworldTextbox"
+        SceneManager = require "SceneManager"
 
         -- Animation timer
         self.animationtimer = 0
@@ -32,8 +42,25 @@ return (function()
         self.turned = false
         self.murderdancing = false
 
+        self.images = {}
+
         self.collision_rectangles = {}
         self.collision_triangles = {}
+
+        self.cutscene_active = false
+
+        -- Room transitioning
+        self.transitioning_to_room = false
+        self.transitioning_from_room = false
+        self.map_to_load = map
+        self.new_map_x = x
+        self.new_map_y = y
+
+        self.transition_fader = CreateSprite("px","Fader")
+        self.transition_fader.color = {0,0,0}
+        self.transition_fader.Scale(640,480)
+        self.transition_fader.alpha = 0
+
 
         -- Create settings to be changed in EncounterStarting
         self.backgroundpath = "black" -- Black background by default
@@ -57,33 +84,116 @@ return (function()
 
         self.camera_pos_x = 0
         self.camera_pos_y = 0
-
     end
 
     function self.DEBUG(text)
-        if false then
+        if self.debug_mode then
             DEBUG(text)
         end
     end
 
     -- Main update function of the module
     function self.Update()
-        self.TakeInput()
+        if self.debug_mode then
+            if Input.GetKey("F10") == 1 then
+                self.cutscene_active = false
+                self.debug_ignore_collision = not self.debug_ignore_collision
+            end
+        end
+
+        if not self.cutscene_active and not self.transitioning_to_room then
+            self.TakeInput()
+        end
         self.UpdatePlayerSprite()
+        if self.mapdata.Update then self.mapdata.Update() end
         self.UpdateEvents()
+        SceneManager.Update()
+        OverworldTextbox.Update()
         self.UpdateCamera() -- TODO: Move to Camera.Update()
         self.UpdateTiles()
         self.UpdateAnimatedTiles()
+        self.UpdateRoomTransition()
+
 
         if self.mapdata.Update then self.mapdata.Update() end
         self.animationtimer = self.animationtimer + 1
 
+        --if not OverworldTextbox.textActive then
+        --    self.cutscene_active = false
+        --end
+    end
 
-        --DEBUG("----")
-        --DEBUG(#self.animated_tiles)
-        --DEBUG(#self.tile_layers   )
+    function self.UnloadMap()
+
+        for layer_id = #self.tile_layers, 1, -1 do
+            for tile_id = #self.tile_layers[layer_id], 1, -1 do
+                local tile = self.tile_layers[layer_id][tile_id]
+
+                if tile.sprite then
+                    tile.sprite.sprite.Remove()
+                    tile.sprite.mask.Remove()
+                    tile.sprite = nil
+                end
+                tile = nil
+            end
+            self.tile_layers[layer_id] = nil
+        end
+        self.tile_layers = {}
 
 
+
+        for event_id = #self.mapdata.events, 1, -1 do
+            local event = self.mapdata.events[event_id]
+            event.sprite.Remove()
+            if event.OnUnload then event.OnUnload() end
+
+        end
+        self.mapdata.events = {}
+
+        self.collision_rectangles = {}
+        self.collision_triangles = {}
+    end
+
+    function self.UpdateRoomTransition()
+        if self.transitioning_to_room then
+            if self.transition_fader.alpha >= 1 then
+                self.transitioning_to_room = false
+                self.transitioning_from_room = true
+
+                if self.mapdata.BeforeUnload then self.mapdata.BeforeUnload() end
+                self.UnloadMap()
+                self.LoadMap(self.map_to_load)
+                self.player.x = self.new_map_x * self.mapdata.scale.x
+                self.player.y = self.new_map_y * self.mapdata.scale.y
+            else
+                self.transition_fader.alpha = self.transition_fader.alpha + 0.06
+            end
+        elseif self.transitioning_from_room then
+            if self.transition_fader.alpha <= 0 then
+                self.transitioning_from_room = false
+                if self.mapdata.AfterEnter then self.mapdata.AfterEnter() end
+            else
+                self.transition_fader.alpha = self.transition_fader.alpha - 0.06
+            end
+        else
+            self.transition_fader.alpha = 0
+        end
+    end
+
+    function self.GotoRoom(map,x,y)
+        if self.transitioning_to_room then return end
+        if self.mapdata.OnLeave then self.mapdata.OnLeave() end
+        self.transitioning_to_room = true
+        self.transitioning_from_room = false
+        self.map_to_load = map
+        self.new_map_x = x
+        self.new_map_y = y
+    end
+
+    function self.SpawnSimpleTextbox(text,portrait,options)
+        SceneManager.Start(function()
+            SceneManager.SpawnTextbox(text,portrait,options)
+        end)
     end
 
     function self.UpdateTiles()
@@ -113,6 +223,8 @@ return (function()
     function self.UpdateCamera()
         self.camera_pos_x = math.min((self.tilemapdata.width  * self.tilemapdata.tilewidth  * self.mapdata.scale.x) - 640,math.max(0,self.player.x - 320))
         self.camera_pos_y = math.min((self.tilemapdata.height * self.tilemapdata.tileheight * self.mapdata.scale.y) - 480,math.max(0,self.player.y - 240))
+        self.transition_fader.x = self.camera_pos_x + 320
+        self.transition_fader.y = self.camera_pos_y + 240
         Misc.MoveCameraTo(self.camera_pos_x,self.camera_pos_y)
     end
 
@@ -121,20 +233,29 @@ return (function()
             error("Missing event name")
         end
         -- Load the event from either the map folder or the root folder
-        local folder = "/Maps/" .. self.mapdata.internalname .. "/Events/"
-        if not Misc.DirExists(folder) then
-            folder = "/Events/"
-            if not Misc.DirExists(folder) then
-                error("Missing \"Events\" folder in both map and root")
+        local events_folder = "/Maps/" .. self.mapdata.internalname .. "/Events/"
+        local folder = nil
+
+        if Misc.DirExists(events_folder) then
+            if Misc.DirExists(events_folder .. object.name) then
+                folder = events_folder .. object.name
             end
         end
 
-        folder = folder .. object.name
 
-        if not Misc.DirExists(folder) then
-            error("Attempted to load event \"" .. object.name .. "\", but it wasn't found in either folder.")
+        if not folder then
+            -- It wasn't found in the maps events folder...
+            events_folder = "/Events/"
+            if Misc.DirExists(events_folder) then
+                if Misc.DirExists(events_folder .. object.name) then
+                    folder = events_folder .. object.name
+                end
+            end
         end
 
+        if not folder then
+            error("Attempted to load event \"" .. object.name .. "\", but it wasn't found in either folder.")
+        end
 
         local modpath = self.GetModName()
         local event = dofile(modpath.modPath .. folder .. "/event.lua")
@@ -156,11 +277,11 @@ return (function()
             event.sprite.SetPivot(0,0)
             event.sprite.SetAnchor(0,0)
 
-            event.sprite.x = event.x + 0.01
-            event.sprite.y = event.y + 0.01
+            event.sprite.x = event.x + (event.sprite_offset.x * self.mapdata.scale.x ) + 0.01
+            event.sprite.y = event.y + (event.sprite_offset.y * self.mapdata.scale.y ) + 0.01
         end
 
-        event.removed = false        
+        event.removed = false
         function event.Destroy()
             for event_id = 1, #self.mapdata.events do
                 if self.mapdata.events[event_id] == event then
@@ -199,7 +320,7 @@ return (function()
                 end
             end
 
-            if event.OnInteract and not event.removed then
+            if event.OnInteract and not event.removed and not self.cutscene_active then
                 if Input.Confirm == 1 then
 
                     local x_inc_1 = (self.player.dir == 0) and self.player.interaction_distance or 0
@@ -226,8 +347,8 @@ return (function()
             if event.Update and not event.removed then event.Update() end
 
             if not event.removed then
-                event.sprite.x = event.x + 0.01
-                event.sprite.y = event.y + 0.01
+                event.sprite.x = event.x + (event.sprite_offset.x * self.mapdata.scale.x ) + 0.01
+                event.sprite.y = event.y + (event.sprite_offset.y * self.mapdata.scale.y ) + 0.01
             end
         end
     end
@@ -259,6 +380,7 @@ return (function()
     -- Loads a map
     function self.LoadMap(mapname)
         -- Loads the map's data
+        self.debug_ignore_collision = false
         self.DEBUG("Attemping to load map \"" .. mapname .. "\"")
         local modpath = self.GetModName()
 
@@ -268,6 +390,8 @@ return (function()
         else
             error("Missing \"Maps\" folder in root")
         end
+
+        if self.mapdata.BeforeLoad then self.mapdata.BeforeLoad() end
 
         self.mapdata.internalname = mapname
         self.mapdata.events = {}
@@ -371,11 +495,18 @@ return (function()
                         table.insert(self.collision_triangles,triangle)
                     end
                 end
+            elseif current_layer.type == "imagelayer" then
+                local image = CreateSprite("../Maps/" .. mapname .. "/" .. current_layer.image:sub(1, -5),"Tiles2")
+                image.SetPivot(0,1)
+                image.x = current_layer.offsetx * self.mapdata.scale.x
+                image.y = ((self.tilemapdata.height * self.tilemapdata.tileheight) - current_layer.offsety)*self.mapdata.scale.y
+                image.Scale(self.mapdata.scale.x,self.mapdata.scale.y)
+                table.insert(self.images,image)
             else
                 self.DEBUG("UNSUPPORTED LAYER TYPE: " .. current_layer.type)
             end
         end
-
+        if self.mapdata.OnLoad then self.mapdata.OnLoad() end
     end
 
     function self.CreateTileSprite(tileset,tile_id,x,y,mapname)
@@ -386,7 +517,7 @@ return (function()
         tile.mask.Scale(tileset.tilewidth * self.mapdata.scale.x, tileset.tileheight * self.mapdata.scale.y)
         tile.mask.Mask("stencil")
         tile.mask.SetPivot(0,1)
-        tile.mask.SetAnchor(0,1)        
+        tile.mask.SetAnchor(0,1)
         tile.mask.MoveToAbs(x, y)
 
         tile.sprite = CreateSprite("../Maps/" .. mapname .. "/" .. tileset.image:sub(1, -5),"Tiles")
@@ -461,7 +592,7 @@ return (function()
         -- Misc.MoveCameraTo(self.player.x,self.player.y)
 
         local spritepath = self.player.animations.IdleDown[4] .. "/" .. self.player.animations.IdleDown[1][1]
-        self.player.sprite = CreateSprite("../Players/" .. playername .. "/Sprites/" .. spritepath, "Objects")
+        self.player.sprite = CreateSprite("../Players/" .. playername .. "/Sprites/" .. spritepath, "Player")
         self.player.sprite.SetPivot(0,0)
         self.player.animation = "IdleDown"
         self.player.dir = 2
@@ -479,29 +610,38 @@ return (function()
 
     end
 
+    function self.GetPlayerSpeed()
+        if self.debug_mode then
+            if Input.GetKey("Backspace") > 0 then
+                return 10
+            end
+        end
+        return self.player.speed
+    end
+
     function self.TakeInput()
         -- Let's try and recreate Undertale's controls faithfully. Oh no.
 
         if Input.Left > 0 then
-            self.MovePlayer(-self.player.speed,0)
+            self.MovePlayer(-self.GetPlayerSpeed(),0)
         elseif Input.Right > 0 then
-            self.MovePlayer(self.player.speed,0)
+            self.MovePlayer(self.GetPlayerSpeed(),0)
         end
 
         local collided = false
 
         self.murderdancing = false
         if Input.Up > 0 then
-            collided = self.MovePlayer(0,self.player.speed)
+            collided = self.MovePlayer(0,self.GetPlayerSpeed())
             if (Input.Down > 0) and collided then
                 self.murderdancing = true
             end
         elseif Input.Down > 0 then
-            self.MovePlayer(0,-self.player.speed)
+            self.MovePlayer(0,-self.GetPlayerSpeed())
         end
 
         if collided and (Input.Down > 0) and (self.animationtimer % 4 >= 2) then
-            self.MovePlayer(0,-self.player.speed * 2)
+            self.MovePlayer(0,-self.GetPlayerSpeed() * 2)
         end
 
     end
@@ -509,6 +649,10 @@ return (function()
     function self.MovePlayer(x,y)
         self.player.x = self.player.x + x
         self.player.y = self.player.y + y
+
+        if self.debug_ignore_collision then
+            return false
+        end
 
         local collided = false
 
@@ -585,23 +729,23 @@ return (function()
             end
 
             if point_hit then
-				self.player.debugpoint.color = {0, 1, 0}                
+				self.player.debugpoint.color = {0, 1, 0}
                 if (y < 0) then
-                    --self.MovePlayer(self.player.speed * -slope,0)
-                    self.player.x = self.player.x + self.player.speed * -slope
+                    --self.MovePlayer(self.GetPlayerSpeed() * -slope,0)
+                    self.player.x = self.player.x + self.GetPlayerSpeed() * -slope
 
                 end
                 if (y > 0) then
-                    --self.MovePlayer(self.player.speed * slope,0)
-                    self.player.x = self.player.x + self.player.speed * slope
+                    --self.MovePlayer(self.GetPlayerSpeed() * slope,0)
+                    self.player.x = self.player.x + self.GetPlayerSpeed() * slope
                 end
                 if (x < 0) then
-                    --self.MovePlayer(0,self.player.speed * -slope)
-                    self.player.y = self.player.y + self.player.speed * -slope
+                    --self.MovePlayer(0,self.GetPlayerSpeed() * -slope)
+                    self.player.y = self.player.y + self.GetPlayerSpeed() * -slope
                 end
                 if (x > 0) then
-                    --self.MovePlayer(0,self.player.speed * slope)
-                    self.player.y = self.player.y + self.player.speed * slope
+                    --self.MovePlayer(0,self.GetPlayerSpeed() * slope)
+                    self.player.y = self.player.y + self.GetPlayerSpeed() * slope
                 end
             end
         end
@@ -761,63 +905,67 @@ return (function()
         -- Animation code... this is very ugly, but it's accurate.
 
         local moving = false
-        if Input.Left > 0 then
-            self.turned = true
-            moving = true
-            if ((Input.Up > 0)   and self.player.animation == "WalkUp"  ) or
-               ((Input.Down > 0) and self.player.animation == "WalkDown") then
-                self.turned = false
-            end
-            if self.turned then
-                self.player.dir = 0
-                self.player.animation = "WalkLeft"
-            end
-        end
 
-        if (Input.Right > 0) and (Input.Left <= 0) then
-            self.turned = true
-            moving = true
-            if ((Input.Up > 0)   and self.player.animation == "WalkUp"  ) or
-               ((Input.Down > 0) and self.player.animation == "WalkDown") then
-                self.turned = false
-            end
-            if self.turned then
-                self.player.dir = 1
-                self.player.animation = "WalkRight"
-            end
-        end
-        if Input.Up > 0 then
-            self.turned = true
-            moving = true
-            if ((Input.Left > 0)  and self.player.animation == "WalkLeft" ) or
-               ((Input.Right > 0) and self.player.animation == "WalkRight") then
-                self.turned = false
-            end
-            if self.turned then
-                self.player.dir = 2
-                self.player.animation = "WalkUp"
-            end
-        end
-        if (Input.Down > 0) and (Input.Up <= 0) then
-            self.turned = true
-            moving = true
-            if ((Input.Left > 0)  and self.player.animation == "WalkLeft" ) or
-               ((Input.Right > 0) and self.player.animation == "WalkRight") then
-                self.turned = false
-            end
-            if self.turned then
-                self.player.dir = 3
-                self.player.animation = "WalkDown"
-            end
-        end
+        if not self.cutscene_active and not self.transitioning_to_room then
 
-        if self.murderdancing then
-            if ((self.animationtimer % 4) >= 2) then
-                self.player.dir = 2
-                self.player.animation = "WalkUp"
-            else
-                self.player.dir = 3
-                self.player.animation = "WalkDown"
+            if Input.Left > 0 then
+                self.turned = true
+                moving = true
+                if ((Input.Up > 0)   and self.player.animation == "WalkUp"  ) or
+                ((Input.Down > 0) and self.player.animation == "WalkDown") then
+                    self.turned = false
+                end
+                if self.turned then
+                    self.player.dir = 0
+                    self.player.animation = "WalkLeft"
+                end
+            end
+
+            if (Input.Right > 0) and (Input.Left <= 0) then
+                self.turned = true
+                moving = true
+                if ((Input.Up > 0)   and self.player.animation == "WalkUp"  ) or
+                ((Input.Down > 0) and self.player.animation == "WalkDown") then
+                    self.turned = false
+                end
+                if self.turned then
+                    self.player.dir = 1
+                    self.player.animation = "WalkRight"
+                end
+            end
+            if Input.Up > 0 then
+                self.turned = true
+                moving = true
+                if ((Input.Left > 0)  and self.player.animation == "WalkLeft" ) or
+                ((Input.Right > 0) and self.player.animation == "WalkRight") then
+                    self.turned = false
+                end
+                if self.turned then
+                    self.player.dir = 2
+                    self.player.animation = "WalkUp"
+                end
+            end
+            if (Input.Down > 0) and (Input.Up <= 0) then
+                self.turned = true
+                moving = true
+                if ((Input.Left > 0)  and self.player.animation == "WalkLeft" ) or
+                ((Input.Right > 0) and self.player.animation == "WalkRight") then
+                    self.turned = false
+                end
+                if self.turned then
+                    self.player.dir = 3
+                    self.player.animation = "WalkDown"
+                end
+            end
+
+            if self.murderdancing then
+                if ((self.animationtimer % 4) >= 2) then
+                    self.player.dir = 2
+                    self.player.animation = "WalkUp"
+                else
+                    self.player.dir = 3
+                    self.player.animation = "WalkDown"
+                end
             end
         end
 

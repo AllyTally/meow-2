@@ -12,6 +12,11 @@ function main()
         y = 5
     }
 
+    self.sprite_offset = {
+        x = 0,
+        y = -2
+    }
+
     self.sprite_path = "button"
 
     self.pressed = false

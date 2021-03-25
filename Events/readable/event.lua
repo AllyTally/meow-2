@@ -3,21 +3,21 @@ function main()
     self = { }
 
     self.hitbox_size = {
-        x = 16,
-        y = 27
+        x = 20,
+        y = 20
     }
 
     self.hitbox_offset = {
-        x = 2,
-        y = -5
+        x = 0,
+        y = 0
     }
 
     self.sprite_offset = {
-        x = 2,
-        y = -5
+        x = 0,
+        y = 0
     }
 
-    self.sprite_path = "spr_tornote"
+    self.sprite_path = "empty"
 
     self.solid = false
 

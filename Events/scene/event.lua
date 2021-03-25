@@ -1,10 +1,12 @@
 function main()
     local self
     self = { }
+
     self.hitbox_size = {
-        x = 34,
-        y = 56
+        x = 20,
+        y = 20
     }
+
     self.hitbox_offset = {
         x = 0,
         y = 0
@@ -12,12 +14,18 @@ function main()
 
     self.sprite_offset = {
         x = 0,
-        y = 2
+        y = 0
     }
 
-    self.sprite_path = "door"
-    self.pressed = false
-    self.solid = true
+    self.sprite_path = "empty"
+
+    self.solid = false
+
+    function self.OnCollide()
+        SceneManager.Start(self.properties["name"])
+        self.Destroy()
+    end
+
 
     function self.Update() end
     return self -- Don't remove this line

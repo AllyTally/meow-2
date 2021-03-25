@@ -22,7 +22,7 @@ return (function()
         IdleUp      = {  { "0"                }, 0  ,{12,29}, "IdleUp"    }, 
         IdleDown    = {  { "0"                }, 0  ,{12,29}, "IdleDown"  },
         WalkLeft    = {  { "0", "1", "2", "1" }, 10 ,{12,29}, "WalkLeft"  },
-        WalkRight   = {  { "0", "1", "2", "1" }, 10 ,{12,29}, "WalkRight" },
+        WalkRight   = {  { "1", "2", "1", "0" }, 10 ,{12,29}, "WalkRight" },
         WalkUp      = {  { "0", "1", "2", "1" }, 10 ,{12,29}, "WalkUp"    },
         WalkDown    = {  { "0", "1", "2", "1" }, 10 ,{12,29}, "WalkDown"  },
     }

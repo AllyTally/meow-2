@@ -3,31 +3,28 @@ function main()
     self = { }
 
     self.hitbox_size = {
-        x = 16,
-        y = 27
+        x = 7,
+        y = 15
     }
 
     self.hitbox_offset = {
-        x = 2,
-        y = -5
+        x = -4,
+        y = 5
     }
 
     self.sprite_offset = {
-        x = 2,
-        y = -5
+        x = -4,
+        y = 5
     }
 
-    self.sprite_path = "spr_tornote"
+    self.sprite_path = "0"
+
+    self.pressed = false
 
     self.solid = false
 
     function self.OnInteract()
-        local text = self.properties["text"]
-        text = text:gsub("\\r","\r")
-        text = text:gsub("\\n","\n")
-
-        Overworld.SpawnSimpleTextbox(text)
-
+        Overworld.SpawnSimpleTextbox("This switch doesn't even\rwork...")
     end
 
 
