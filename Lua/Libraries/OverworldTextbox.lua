@@ -291,7 +291,7 @@ function self.FormatText(tab)
 
                     textToDisplay = textToDisplay .. ((string.startsWith(command, "[w") or string.startsWith(command, "[i") or string.startsWith(command, "[ne") or string.startsWith(command, "[co")) and command or "")
                 elseif char == "\n" then
-                    textToDisplay = textToDisplay .. "\n[alpha:ff]* [alpha:00]"
+                    textToDisplay = textToDisplay .. "\n[alpha:ff][voice:" .. self.voice .. "]* [novoice][alpha:00]"
                 elseif char == "\r" then
                     textToDisplay = textToDisplay .. "\n"
                 else
@@ -300,7 +300,7 @@ function self.FormatText(tab)
             end
         end
 
-        textToDisplay = "[color:" .. startingColor .. "]*[alpha:00] " .. textToDisplay
+        textToDisplay = "[color:" .. startingColor .. "][voice:" .. self.voice .. "]* [novoice][alpha:00]" .. textToDisplay
         table.insert(textStarsTable, "[noskip][font:" .. self.font .. "][novoice]" .. self.effect .. "[color:ffffff][noskip:off]" .. textToDisplay)
     end
 
