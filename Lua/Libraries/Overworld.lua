@@ -101,10 +101,12 @@ return (function()
             end
         end
 
+		local old_x = self.player.x
+		local old_y = self.player.y
         if not self.cutscene_active and not self.transitioning_to_room then
             self.TakeInput()
         end
-        self.UpdatePlayerSprite()
+        self.UpdatePlayerSprite(self.player.x ~= old_x or self.player.y ~= old_y)
         if self.mapdata.Update then self.mapdata.Update() end
         self.UpdateEvents()
         SceneManager.Update()
@@ -672,9 +674,9 @@ return (function()
                 end
             end
 
-			if collided then
-				break
-			end
+            if collided then
+                break
+            end
         end
 
         for event_id = 1, #self.mapdata.events do
@@ -703,48 +705,45 @@ return (function()
                 end
             end
 
-			if collided then
-				break
-			end
+            if collided then
+                break
+            end
         end
 
-		self.player.debugpoint.color = {1, 1, 1}
+        self.player.debugpoint.color = {1, 1, 1}
         for triangle_id = 1, #self.collision_triangles do
-			-- self.DEBUG(triangle_id)
+            -- self.DEBUG(triangle_id)
             local t = self.collision_triangles[triangle_id]
 
             local point_hit = false
             local slope = -1
+            local isAngleOnRight = false
+            local isAboveLine = false
 
-            point_hit, slope = self.isCollidingWithTriangle(self.player.x,self.player.y,t[1],t[2],t[3],t[4][1],t[4][2])
+            point_hit, slope, isAngleOnRight, isAboveLine = self.isCollidingWithTriangle(self.player.x,self.player.y,t[1],t[2],t[3],t[4][1],t[4][2])
 
             if not point_hit then
-                point_hit, slope = self.isCollidingWithTriangle(self.player.x+self.player.hitbox_size.x,self.player.y,t[1],t[2],t[3],t[4][1],t[4][2])
+                point_hit, slope, isAngleOnRight, isAboveLine = self.isCollidingWithTriangle(self.player.x+self.player.hitbox_size.x,self.player.y,t[1],t[2],t[3],t[4][1],t[4][2])
             end
             if not point_hit then
-                point_hit, slope = self.isCollidingWithTriangle(self.player.x,self.player.y+self.player.hitbox_size.y,t[1],t[2],t[3],t[4][1],t[4][2])
+                point_hit, slope, isAngleOnRight, isAboveLine = self.isCollidingWithTriangle(self.player.x,self.player.y+self.player.hitbox_size.y,t[1],t[2],t[3],t[4][1],t[4][2])
             end
             if not point_hit then
-                point_hit, slope = self.isCollidingWithTriangle(self.player.x+self.player.hitbox_size.x,self.player.y+self.player.hitbox_size.y,t[1],t[2],t[3],t[4][1],t[4][2])
+                point_hit, slope, isAngleOnRight, isAboveLine = self.isCollidingWithTriangle(self.player.x+self.player.hitbox_size.x,self.player.y+self.player.hitbox_size.y,t[1],t[2],t[3],t[4][1],t[4][2])
             end
 
             if point_hit then
-				self.player.debugpoint.color = {0, 1, 0}
-                if (y < 0) then
-                    --self.MovePlayer(self.GetPlayerSpeed() * -slope,0)
+                self.player.debugpoint.color = {0, 1, 0}
+                if (y < 0 and not isAboveLine) then
                     self.player.x = self.player.x + self.GetPlayerSpeed() * -slope
-
                 end
-                if (y > 0) then
-                    --self.MovePlayer(self.GetPlayerSpeed() * slope,0)
+                if (y > 0 and isAboveLine) then
                     self.player.x = self.player.x + self.GetPlayerSpeed() * slope
                 end
-                if (x < 0) then
-                    --self.MovePlayer(0,self.GetPlayerSpeed() * -slope)
+                if (x < 0 and not isAngleOnRight) then
                     self.player.y = self.player.y + self.GetPlayerSpeed() * -slope
                 end
-                if (x > 0) then
-                    --self.MovePlayer(0,self.GetPlayerSpeed() * slope)
+                if (x > 0 and isAngleOnRight) then
                     self.player.y = self.player.y + self.GetPlayerSpeed() * slope
                 end
             end
@@ -761,7 +760,7 @@ return (function()
     end
 
     function self.isCollidingWithTriangle(player_x,player_y,a,b,c,offx,offy)
-		local point_angle -- C
+        local point_angle -- C
         local point_left  -- A
         local point_right -- B
 
@@ -794,19 +793,16 @@ return (function()
                 point_left = {b[1],b[2]}
                 point_right = {a[1],a[2]}
             end
-			
+            
         else
             error("Collision triangle must be a right-triangle")
         end
 
-		offx = offx + point_left[1]
-		offy = offy + math.min(point_left[2], point_right[2])
+        offx = offx + point_left[1]
+        offy = offy + math.min(point_left[2], point_right[2])
 
-		local point_x = player_x - offx
+        local point_x = player_x - offx
         local point_y = player_y - offy
-        -- self.DEBUG("(" .. point_x .. "," .. point_y .. ")")
-
-        -- self.DEBUG("left:   (" .. point_left[1]  .. "," .. point_left[2]  .. ") right:  (" .. point_right[1] .. "," .. point_right[2] .. ") angle:  (" .. point_angle[1] .. "," .. point_angle[2] .. ")")
 
         local use_point = point_left
         local use_point2 = point_right
@@ -815,67 +811,43 @@ return (function()
             use_point = point_right
             use_point2 = point_left
         end
-        -- self.DEBUG("left xval:  " .. point_left[1])
-        -- self.DEBUG("right xval: " .. point_right[1])
 
         slope = -(use_point[2] - point_angle[2]) / (use_point2[1] - use_point[1]) -- get the slope
-        -- self.DEBUG("slope = " .. slope)
 
-		-- self.DEBUG("left:   (" .. point_left[1]  .. "," .. point_left[2]  .. ") right:  (" .. point_right[1] .. "," .. point_right[2] .. ") angle:  (" .. point_angle[1] .. "," .. point_angle[2] .. ")")
+        local isAboveLine = point_angle[2] == math.max(point_left[2], point_right[2])
 
-		-- point_left[1] = point_left[1] - point_angle[1]
-        -- point_left[2] = point_left[2] - (point_angle[2] - math.min(point_left[2], point_right[2]))
-        -- point_right[1] = point_right[1] -(point_angle[1] - point_right[1])
-        -- point_right[2] = point_right[2] - (point_angle[2] - math.min(point_left[2], point_right[2]))
-        -- point_angle = {0,0}
+        if isAboveLine then
+            if point_left[1] < 0 then
+                point_right[1] = point_right[1] - point_left[1]
+                point_angle[1] = point_angle[1] - point_left[1]
+                point_left[1] = 0
+            end
+            
+            if point_left[2] < 0 or point_right[2] < 0 then
+                local offset = math.min(point_left[2], point_right[2])
+                point_right[2] = point_right[2] - offset
+                point_left[2] = point_left[2] - offset
+                point_angle[2] = point_angle[2] - offset
+            end
+        end
 
-		local isAboveLine = point_angle[2] == math.max(point_left[2], point_right[2])
+        local width  = point_right[1] - point_left[1]
+        local height = math.max(point_left[2], point_right[2]) - math.min(point_left[2], point_right[2])
 
-		if isAboveLine then
-			if point_left[1] < 0 then
-				point_right[1] = point_right[1] - point_left[1]
-				point_angle[1] = point_angle[1] - point_left[1]
-				point_left[1] = 0
-			end
-			
-			if point_left[2] < 0 or point_right[2] < 0 then
-				local offset = math.min(point_left[2], point_right[2])
-				point_right[2] = point_right[2] - offset
-				point_left[2] = point_left[2] - offset
-				point_angle[2] = point_angle[2] - offset
-			end
-			
-			-- self.DEBUG("x: " .. point_x .. " left:   (" .. point_left[1]  .. "," .. point_left[2]  .. ") right:  (" .. point_right[1] .. "," .. point_right[2] .. ") angle:  (" .. point_angle[1] .. "," .. point_angle[2] .. ")")
-		end
+        local isSlopeIntercepting
 
-        --self.DEBUG("x>=0     " .. tostring(point_x >= 0))
-        --self.DEBUG("y>=0     " .. tostring(point_y >= 0))
-        --self.DEBUG("y=mx+b " .. tostring(point_y <= (slope * point_x) + (point_left[2] - point_angle[2])))
-		local width  = point_right[1] - point_left[1] -- math.max(point_left[1], point_right[1], point_angle[1]) - math.min(point_left[1], point_right[1], point_angle[1])
-		local height = math.max(point_left[2], point_right[2]) - math.min(point_left[2], point_right[2])
+        if isAboveLine then
+            isSlopeIntercepting = point_y >= (slope * point_x) + point_left[2]
+        else
+            isSlopeIntercepting = point_y <= (slope * point_x) + (point_left[2] - point_angle[2])
+        end
 
-		local isSlopeIntercepting
-
-		if isAboveLine then
-			-- isSlopeIntercepting = point_y >= (slope * point_x) + (point_angle[2] + math.min(point_left[2], point_right[2]))
-			-- isSlopeIntercepting = point_y >= (slope * point_x) + ( math.min(point_left[2], point_right[2]))
-			isSlopeIntercepting = point_y >= (slope * point_x) + point_left[2]--(height - (point_left[2] - point_angle[2]))
-			
-			-- self.DEBUG("x: " .. point_x .. " y: " .. point_y .. " val: " .. ((slope * point_x) + math.min(point_left[2], point_right[2])))
-			-- self.DEBUG("x: " .. point_x .. " y: " .. point_y .. " val: " .. ((slope * point_x) + (point_angle[2] + math.min(point_left[2], point_right[2])))
-			-- self.DEBUG("x: " .. point_x .. " y: " .. point_y .. " " .. tostring(isSlopeIntercepting))
-			-- self.DEBUG("x: " .. point_x .. " y: " .. point_y .. " width: " .. width .. " height: " .. height)
-			-- self.DEBUG("x: " .. point_x .. " left:   (" .. point_left[1]  .. "," .. point_left[2]  .. ") right:  (" .. point_right[1] .. "," .. point_right[2] .. ") angle:  (" .. point_angle[1] .. "," .. point_angle[2] .. ")")
-		else
-			isSlopeIntercepting = point_y <= (slope * point_x) + (point_left[2] - point_angle[2])
-		end
-
-		local isColliding = 
+        local isColliding = 
                (point_x >= 0) and (point_x <= width) and
                (point_y >= 0) and (point_y <= height) and
                isSlopeIntercepting -- y = mx + b
 
-		return isColliding, slope
+        return isColliding, slope, point_angle[1] == point_right[1], isAboveLine
     end
 
     function self.sign(number)
@@ -896,7 +868,7 @@ return (function()
         return ((r1.X1 < r2.X2) and (r1.X2 > r2.X1) and (r1.Y1 < r2.Y2) and (r1.Y2 > r2.Y1))
     end
 
-    function self.UpdatePlayerSprite()
+    function self.UpdatePlayerSprite(moving)
         -- Update the position of the sprite itself
         self.player.sprite.x = self.player.x
         self.player.sprite.y = self.player.y
@@ -904,13 +876,10 @@ return (function()
 
         -- Animation code... this is very ugly, but it's accurate.
 
-        local moving = false
-
         if not self.cutscene_active and not self.transitioning_to_room then
 
             if Input.Left > 0 then
                 self.turned = true
-                moving = true
                 if ((Input.Up > 0)   and self.player.animation == "WalkUp"  ) or
                 ((Input.Down > 0) and self.player.animation == "WalkDown") then
                     self.turned = false
@@ -923,7 +892,6 @@ return (function()
 
             if (Input.Right > 0) and (Input.Left <= 0) then
                 self.turned = true
-                moving = true
                 if ((Input.Up > 0)   and self.player.animation == "WalkUp"  ) or
                 ((Input.Down > 0) and self.player.animation == "WalkDown") then
                     self.turned = false
@@ -935,7 +903,6 @@ return (function()
             end
             if Input.Up > 0 then
                 self.turned = true
-                moving = true
                 if ((Input.Left > 0)  and self.player.animation == "WalkLeft" ) or
                 ((Input.Right > 0) and self.player.animation == "WalkRight") then
                     self.turned = false
@@ -947,7 +914,6 @@ return (function()
             end
             if (Input.Down > 0) and (Input.Up <= 0) then
                 self.turned = true
-                moving = true
                 if ((Input.Left > 0)  and self.player.animation == "WalkLeft" ) or
                 ((Input.Right > 0) and self.player.animation == "WalkRight") then
                     self.turned = false
