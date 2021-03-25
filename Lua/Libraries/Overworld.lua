@@ -106,7 +106,7 @@ return (function()
         if not self.cutscene_active and not self.transitioning_to_room then
             self.TakeInput()
         end
-        self.UpdatePlayerSprite(self.player.x ~= old_x or self.player.y ~= old_y)
+        self.UpdatePlayerSprite(self.player.x ~= old_x or self.player.y ~= old_y or self.murderdancing)
         if self.mapdata.Update then self.mapdata.Update() end
         self.UpdateEvents()
         SceneManager.Update()
