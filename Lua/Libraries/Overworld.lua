@@ -101,10 +101,12 @@ return (function()
             end
         end
 
+		local old_x = self.player.x
+		local old_y = self.player.y
         if not self.cutscene_active and not self.transitioning_to_room then
             self.TakeInput()
         end
-        self.UpdatePlayerSprite()
+        self.UpdatePlayerSprite(self.player.x ~= old_x or self.player.y ~= old_y)
         if self.mapdata.Update then self.mapdata.Update() end
         self.UpdateEvents()
         SceneManager.Update()
@@ -866,7 +868,7 @@ return (function()
         return ((r1.X1 < r2.X2) and (r1.X2 > r2.X1) and (r1.Y1 < r2.Y2) and (r1.Y2 > r2.Y1))
     end
 
-    function self.UpdatePlayerSprite()
+    function self.UpdatePlayerSprite(moving)
         -- Update the position of the sprite itself
         self.player.sprite.x = self.player.x
         self.player.sprite.y = self.player.y
@@ -874,13 +876,10 @@ return (function()
 
         -- Animation code... this is very ugly, but it's accurate.
 
-        local moving = false
-
         if not self.cutscene_active and not self.transitioning_to_room then
 
             if Input.Left > 0 then
                 self.turned = true
-                moving = true
                 if ((Input.Up > 0)   and self.player.animation == "WalkUp"  ) or
                 ((Input.Down > 0) and self.player.animation == "WalkDown") then
                     self.turned = false
@@ -893,7 +892,6 @@ return (function()
 
             if (Input.Right > 0) and (Input.Left <= 0) then
                 self.turned = true
-                moving = true
                 if ((Input.Up > 0)   and self.player.animation == "WalkUp"  ) or
                 ((Input.Down > 0) and self.player.animation == "WalkDown") then
                     self.turned = false
@@ -905,7 +903,6 @@ return (function()
             end
             if Input.Up > 0 then
                 self.turned = true
-                moving = true
                 if ((Input.Left > 0)  and self.player.animation == "WalkLeft" ) or
                 ((Input.Right > 0) and self.player.animation == "WalkRight") then
                     self.turned = false
@@ -917,7 +914,6 @@ return (function()
             end
             if (Input.Down > 0) and (Input.Up <= 0) then
                 self.turned = true
-                moving = true
                 if ((Input.Left > 0)  and self.player.animation == "WalkLeft" ) or
                 ((Input.Right > 0) and self.player.animation == "WalkRight") then
                     self.turned = false
