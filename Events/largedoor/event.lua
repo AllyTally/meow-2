@@ -3,7 +3,7 @@ function main()
     self = { }
     self.hitbox_size = {
         x = 34,
-        y = 56
+        y = 20
     }
     self.hitbox_offset = {
         x = 0,
@@ -18,6 +18,9 @@ function main()
     self.sprite_path = "door"
     self.pressed = false
     self.solid = true
+    
+    self.uses_depth = true
+    self.depth_offset = 20
 
     function self.Update() end
     return self -- Don't remove this line

@@ -31,17 +31,46 @@ return (function()
         end
     end
     
+    function self.UnlockPlayerMovement()
+        Overworld.cutscene_active = false
+    end
+
+    function self.LockPlayerMovement()
+        Overworld.cutscene_active = true
+    end
+    
     function self.Delay(frames)
         self.delay_timer = frames
         coroutine.yield()
     end
     
     
-    function self.Start(cutscene)
+    function self.Start(cutscene,silence_warning)
+        if self.current_coroutine and coroutine.status(self.current_coroutine) ~= "dead" then
+            if not silence_warning then
+                DEBUG("WARNING: A cutscene is already active!")
+            end
+            self.current_coroutine = nil
+        end
+
         local modpath = Overworld.GetModName()
         local func = nil
+
         if type(cutscene) == "string" then
-            func = dofile(modpath.modPath .. "/Scenes/" .. cutscene .. ".lua")
+
+            local scenes_folder = "/Maps/" .. Overworld.mapdata.internalname .. "/Scenes/"
+            local folder = nil
+
+            if Misc.DirExists(scenes_folder) then
+                folder = scenes_folder
+            elseif Misc.DirExists("/Scenes/") then
+                -- It wasn't found in the maps scenes folder...
+                folder = "/Scenes/"
+            else
+                error("Attempted to load scene \"" .. cutscene .. "\", but it wasn't found in either folder.")
+            end
+
+            func = dofile(modpath.modPath .. folder .. cutscene .. ".lua")
         elseif type(cutscene) == "function" then
             func = cutscene
         end
@@ -53,7 +82,13 @@ return (function()
 
     function self.SpawnTextbox(text,portrait,options)
         self.delay_from_textbox = true
-        OverworldTextbox.SetText(text,Overworld.player.y - Misc.cameraY < 230, portrait,options)
+        local top = true
+        if options and options["top"] ~= nil then
+            top = options["top"]
+        else
+            top = Overworld.player.y - Misc.cameraY < 230
+        end
+        OverworldTextbox.SetText(text,top,portrait,options)
         coroutine.yield()
     end
 

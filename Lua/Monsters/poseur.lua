@@ -8,6 +8,8 @@ name = "Poseur"
 hp = 12
 atk = 1
 def = 1
+gold = 10
+xp = 200
 check = "Check message goes here."
 dialogbubble = "right" -- See documentation for what bubbles you have available.
 canspare = false
@@ -25,7 +27,8 @@ end
 -- This handles the commands; all-caps versions of the commands list you have above.
 function HandleCustomCommand(command)
     if command == "ACT 1" then
-        currentdialogue = {"Selected\nAct 1."}
+        currentdialogue = {"AAAAAAAAAAAAAAAAAAAAAAAAAAA"}
+        canspare = true
     elseif command == "ACT 2" then
         currentdialogue = {"Selected\nAct 2."}
     elseif command == "ACT 3" then

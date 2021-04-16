@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.4" tiledversion="1.4.3" orientation="orthogonal" renderorder="right-down" width="16" height="12" tilewidth="20" tileheight="20" infinite="0" nextlayerid="7" nextobjectid="325">
+<map version="1.4" tiledversion="1.4.3" orientation="orthogonal" renderorder="right-down" width="16" height="12" tilewidth="20" tileheight="20" infinite="0" nextlayerid="7" nextobjectid="332">
  <editorsettings>
   <export target="tiledata.lua" format="lua"/>
  </editorsettings>
@@ -92,7 +92,7 @@
   </object>
   <object id="307" name="wallswitch" x="210" y="58" width="7" height="15"/>
   <object id="308" name="largedoor" x="123" y="24" width="34" height="56"/>
-  <object id="309" name="start" x="160" y="200"/>
+  <object id="309" name="start" x="150" y="200" width="20" height="20"/>
   <object id="316" name="readable" x="80" y="60" width="20" height="20">
    <properties>
     <property name="text">Only the fearless may proceed.
@@ -126,6 +126,17 @@ Both walk not the middle road.</property>
     <property name="map" value="ruins1"/>
     <property name="x" type="int" value="150"/>
     <property name="y" type="int" value="340"/>
+   </properties>
+  </object>
+  <object id="326" name="npc_toriel" x="140" y="108" width="25" height="52"/>
+  <object id="328" name="scene" x="80" y="180" width="180" height="20">
+   <properties>
+    <property name="name" value="toriel_scene_1"/>
+   </properties>
+  </object>
+  <object id="331" name="scene" x="40" y="124" width="240" height="20">
+   <properties>
+    <property name="name" value="toriel_walkaway"/>
    </properties>
   </object>
  </objectgroup>

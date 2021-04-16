@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.4" tiledversion="1.4.3" orientation="orthogonal" renderorder="right-down" width="47" height="12" tilewidth="20" tileheight="20" infinite="0" nextlayerid="7" nextobjectid="351">
+ <editorsettings>
+  <export target="tiledata.lua" format="lua"/>
+ </editorsettings>
+ <tileset firstgid="1" source="../../Tilesets/lab1.tsx"/>
+ <layer id="1" name="Tile Layer 1" width="47" height="12">
+  <data encoding="csv">
+1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,1,1,1,1,
+1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,1,1,1,1,
+1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,1,1,1,1,
+1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,1,1,1,1,
+9,10,11,12,9,10,11,12,9,31,11,12,9,10,11,12,9,10,10,31,12,9,10,11,12,9,10,11,12,9,10,11,12,10,11,12,9,10,11,12,13,2,2,1,1,1,1,
+16,17,18,19,16,17,18,19,16,38,18,19,16,17,18,19,16,17,17,38,19,16,17,18,19,16,17,18,19,16,17,18,19,17,18,19,16,17,18,19,20,2,2,1,1,1,1,
+23,24,25,26,23,24,25,26,23,45,25,26,23,24,25,26,23,24,24,45,26,23,24,25,26,23,24,25,26,23,24,25,26,24,25,26,23,24,25,26,27,2,2,8,9,10,11,
+2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,15,16,17,18,
+2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,22,23,24,25,
+1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+</data>
+ </layer>
+ <layer id="2" name="Tile Layer 2" width="47" height="12">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,33,34,0,0,0,0,0,0,0,0,0,0,33,34,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,40,41,0,0,0,0,0,0,0,0,0,0,40,41,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+</data>
+ </layer>
+ <objectgroup id="4" name="collision">
+  <object id="337" x="0" y="180" width="860" height="20"/>
+  <object id="338" x="0" y="120" width="820" height="20"/>
+  <object id="344" x="860" y="0" width="20" height="180"/>
+  <object id="345" x="800" y="0" width="20" height="120"/>
+ </objectgroup>
+ <objectgroup id="5" name="events">
+  <object id="336" name="start" x="20" y="140" width="20" height="20"/>
+  <object id="339" name="monitor" x="140" y="100" width="34" height="24">
+   <properties>
+    <property name="pages" type="int" value="4"/>
+    <property name="text1" value="ENTRY NUMBER 1"/>
+    <property name="text2">This is it...[w:8]
+Time to do what the Princess has asked me to do.</property>
+    <property name="text3" value="I will find out what's wrong."/>
+    <property name="text4" value="Nobody else has been able to help..."/>
+   </properties>
+  </object>
+  <object id="341" name="monitor" x="300" y="100" width="34" height="24">
+   <properties>
+    <property name="pages" type="int" value="8"/>
+    <property name="text1" value="ENTRY NUMBER 2"/>
+    <property name="text2" value="The castle is locked by star power."/>
+    <property name="text3" value="Unfortunately,[w:8] this power cannot be recreated artificially."/>
+    <property name="text4" value="Star power can only be derived from stars."/>
+    <property name="text5" value="So,[w:8] we cannot obtain star power that way."/>
+    <property name="text6" value="We will have to use what we have now..."/>
+    <property name="text7" value="The spare keys that the Princess gave me."/>
+    <property name="text8" value="(Why didn't I think of using them immediately...)"/>
+   </properties>
+  </object>
+  <object id="342" name="monitor" x="460" y="100" width="34" height="24">
+   <properties>
+    <property name="pages" type="int" value="6"/>
+    <property name="text1" value="ENTRY NUMBER 3"/>
+    <property name="text2" value="I've switched to typing on my phone,[w:8] since I'm in the castle now."/>
+    <property name="text3" value="Though it seems as if nobody else is with me."/>
+    <property name="text4" value="The castle feels quieter than normal... not even the Princess is here."/>
+    <property name="text5" value="I must continue my search anyway."/>
+    <property name="text6" value="They called me here for a reason."/>
+   </properties>
+  </object>
+  <object id="343" name="monitor" x="620" y="100" width="34" height="24">
+   <properties>
+    <property name="pages" type="int" value="5"/>
+    <property name="text1" value="ENTRY NUMBER 5"/>
+    <property name="text2" value="There's nobody here."/>
+    <property name="text3" value="I've been here for seemingly hours, and I can't find a single toad."/>
+    <property name="text4" value="Where is everyone?"/>
+    <property name="text5" value="What happened?"/>
+   </properties>
+  </object>
+  <object id="347" name="door" x="820" y="0" width="20" height="20">
+   <properties>
+    <property name="map" value="lab2"/>
+    <property name="x" type="int" value="148"/>
+    <property name="y" type="int" value="0"/>
+   </properties>
+  </object>
+  <object id="350" name="door" x="840" y="0" width="20" height="20">
+   <properties>
+    <property name="map" value="lab2"/>
+    <property name="x" type="int" value="148"/>
+    <property name="y" type="int" value="0"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>

@@ -9,7 +9,7 @@ return {
   tilewidth = 20,
   tileheight = 20,
   nextlayerid = 7,
-  nextobjectid = 325,
+  nextobjectid = 332,
   properties = {},
   tilesets = {
     {
@@ -485,10 +485,10 @@ return {
           name = "start",
           type = "",
           shape = "rectangle",
-          x = 160,
+          x = 150,
           y = 200,
-          width = 0,
-          height = 0,
+          width = 20,
+          height = 20,
           rotation = 0,
           visible = true,
           properties = {}
@@ -574,6 +574,49 @@ return {
             ["map"] = "ruins1",
             ["x"] = 150,
             ["y"] = 340
+          }
+        },
+        {
+          id = 326,
+          name = "npc_toriel",
+          type = "",
+          shape = "rectangle",
+          x = 140,
+          y = 108,
+          width = 25,
+          height = 52,
+          rotation = 0,
+          visible = true,
+          properties = {}
+        },
+        {
+          id = 328,
+          name = "scene",
+          type = "",
+          shape = "rectangle",
+          x = 80,
+          y = 180,
+          width = 180,
+          height = 20,
+          rotation = 0,
+          visible = true,
+          properties = {
+            ["name"] = "toriel_scene_1"
+          }
+        },
+        {
+          id = 331,
+          name = "scene",
+          type = "",
+          shape = "rectangle",
+          x = 40,
+          y = 124,
+          width = 240,
+          height = 20,
+          rotation = 0,
+          visible = true,
+          properties = {
+            ["name"] = "toriel_walkaway"
           }
         }
       }

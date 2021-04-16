@@ -13,6 +13,11 @@ return (function()
         y = 22
     }
     
+    self.soul_position = {
+        x = 20,
+        y = 20
+    }
+    
     self.interaction_distance = 13 * 2
 
     self.animations = {

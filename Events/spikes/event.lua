@@ -13,7 +13,7 @@ function main()
     }
     
     self.sprite_offset = {
-        x = 1,
+        x = 0,
         y = 1
     }
 

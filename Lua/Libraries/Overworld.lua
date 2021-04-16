@@ -2,9 +2,7 @@ return (function()
     local self
     self = { }
 
-    if not enemies then
-        enemies = { }
-    end
+    enemies = {}
 
     self.debug_mode = true
     self.debug_ignore_collision = false
@@ -20,11 +18,15 @@ return (function()
         CreateLayer("Tiles2", "Tiles")
         CreateLayer("Objects", "Tiles2")
         CreateLayer("Player", "Objects")
-        CreateLayer("Textbox","Player")
+        CreateLayer("ObjectsAbove", "Player")
+        CreateLayer("Textbox","ObjectsAbove")
         CreateLayer("Fader","Textbox")
+        CreateLayer("SuperTop","Fader")
 
         OverworldTextbox = require "OverworldTextbox"
-        SceneManager = require "SceneManager"
+        SceneManager     = require "SceneManager"
+        NPCHelper        = require "NPCHelper"
+        StateHandler     = require "StateHandler"
 
         -- Animation timer
         self.animationtimer = 0
@@ -60,6 +62,17 @@ return (function()
         self.transition_fader.color = {0,0,0}
         self.transition_fader.Scale(640,480)
         self.transition_fader.alpha = 0
+        
+        -- Battle transitioning
+        self.transitioning_to_battle = false
+        self.transitioning_from_battle = false
+        self.transition_timer = 0
+        self.transition_battle = nil
+
+        self.transition_soul = CreateSprite("spr_heartsmall", "SuperTop")
+        self.transition_soul.Scale(2,2)
+        self.transition_soul.alpha = 0
+        self.transition_soul.color = { 1, 0, 0 }
 
 
         -- Create settings to be changed in EncounterStarting
@@ -84,45 +97,254 @@ return (function()
 
         self.camera_pos_x = 0
         self.camera_pos_y = 0
+        
+        self.inbattle = false
+        
+        self.UpdateBattle = nil
     end
 
     function self.DEBUG(text)
         if self.debug_mode then
-            DEBUG(text)
+            --DEBUG(text)
         end
     end
 
     -- Main update function of the module
     function self.Update()
-        if self.debug_mode then
-            if Input.GetKey("F10") == 1 then
-                self.cutscene_active = false
-                self.debug_ignore_collision = not self.debug_ignore_collision
+        if not self.inbattle then
+            if self.debug_mode then
+                if Input.GetKey("F10") == 1 then
+                    self.cutscene_active = false
+                    self.debug_ignore_collision = not self.debug_ignore_collision
+                end
+            end
+
+            local old_x = self.player.x
+            local old_y = self.player.y
+            if not self.cutscene_active and not self.transitioning_to_room and not self.transitioning_to_battle then
+                self.TakeInput()
+            end
+            self.UpdatePlayerSprite(self.player.x ~= old_x or self.player.y ~= old_y or self.murderdancing)
+            if self.mapdata.Update then self.mapdata.Update() end
+            self.UpdateEvents()
+            NPCHelper.Update()
+            SceneManager.Update()
+            OverworldTextbox.Update()
+            self.UpdateCamera() -- TODO: Move to Camera.Update()
+            self.UpdateTiles()
+            self.UpdateAnimatedTiles()
+            self.UpdateRoomTransition()
+            self.UpdateBattleTransition()
+
+
+            if self.mapdata.Update then self.mapdata.Update() end
+            self.animationtimer = self.animationtimer + 1
+
+        else
+            self.UpdateBattleTransition()
+            StateHandler.Update()
+            if self.UpdateBattle then self.UpdateBattle() end
+        end
+
+    end
+
+    function self.RemoveAllEnemies()
+        for enemy_id = 1, #enemies do
+            local enemy = enemies[enemy_id]
+            enemy.Call("Remove")
+        end
+        enemies = {}
+    end
+
+    function self.ReturnFromBattle()
+        State("NONE")
+        self.transitioning_from_battle = true
+        self.transition_timer = 0
+        self.transition_fader.alpha = 0
+        self.player.sprite.layer = "Player"
+    end
+
+    function self.EnterBattle(battle)
+        self.transitioning_to_battle = true
+        self.transition_timer = 0
+
+        self.transition_fader.alpha = 1
+
+        self.player.sprite.layer = "SuperTop"
+
+        self.transition_soul.layer = "SuperTop"
+        self.transition_soul.SendToTop()
+        self.transition_soul.alpha = 1
+
+        
+        local soul_x = self.player.x + (self.player.soul_position.x * self.player.size[1])
+        local soul_y = self.player.y + (self.player.soul_position.y * self.player.size[2])
+        
+        self.transition_soul.x = soul_x
+        self.transition_soul.y = soul_y
+
+		--self.precamera = {OWCamera.x,OWCamera.y}
+        --Player.MoveToAbs(Player.absx-OWCamera.x,Player.absy-OWCamera.y,true)
+        --self.transition_soul.MoveTo(self.transition_soul.x-OWCamera.x,self.transition_soul.y-OWCamera.y)
+
+        self.transition_battle = battle
+        Audio.Stop()
+
+    end
+
+    function self.UpdateBattleTransition()
+        local soul_to_x = 48 + self.camera_pos_x + 1
+        local soul_to_y = 25 + self.camera_pos_y - 1
+
+        if self.transitioning_from_battle then
+            if self.inbattle then
+                if self.transition_fader.alpha < 1 then
+                    self.transition_fader.alpha = self.transition_fader.alpha + 0.1
+                    --self.transition_fader.alpha = 1
+                else
+                    self.HideBattle()
+                    self.RemoveAllEnemies()
+                    self.inbattle = false
+                end
+            else
+                if self.transition_fader.alpha > 0 then
+                    self.transition_fader.alpha = self.transition_fader.alpha - 0.1
+                else
+                    self.transitioning_from_battle = false
+                end
+            end
+        elseif self.transitioning_to_battle then
+            -- The three "clicks" at the start of the battle
+            if self.transition_timer == 0 or
+               self.transition_timer == 8 or
+               self.transition_timer == 16 then
+
+                Audio.PlaySound("BeginBattle2", 0.65)
+                self.transition_soul.alpha = 1
+            end
+            if self.transition_timer == 4 or
+               self.transition_timer == 12 then
+                self.transition_soul.alpha = 0
+            end
+
+            
+            if self.transition_timer == 20 then
+                self.player.sprite.alpha = 0
+                Audio.PlaySound("BeginBattle3", 0.65)
+                self.transdistance = math.sqrt(math.pow(self.transition_soul.x-soul_to_x,2) + math.pow(self.transition_soul.y-soul_to_y,2))
+                self.transition_start_x = self.transition_soul.x
+                self.transition_start_y = self.transition_soul.y
+                self.transition_movement_timer = 25
+            end
+            if (self.transition_timer > 20) and (self.transition_timer < 2000) then
+                if self.transition_movement_timer > 0 then
+                    self.transition_start_x = self.transition_start_x + (1 / self.transition_movement_timer * (soul_to_x - self.transition_start_x))
+                    self.transition_start_y = self.transition_start_y + (1 / self.transition_movement_timer * (soul_to_y - self.transition_start_y))
+                    self.transition_soul.MoveTo(self.transition_start_x,self.transition_start_y)
+                    self.transition_movement_timer=self.transition_movement_timer-1
+                else
+                    if self.transition_timer > 40 then
+                        self.transition_timer = 2000
+                        self.transition_soul.MoveTo(self.transition_soul.x - self.camera_pos_x,self.transition_soul.y - self.camera_pos_y)
+                        self.EnterBattleInstant(self.transition_battle)
+                        self.transition_fader.MoveTo(320,240)
+                    end
+                end
+            end
+            if self.transition_timer >= 2000 then
+                if self.transition_fader.alpha > 0 then
+                    self.transition_fader.alpha = self.transition_fader.alpha - 0.1
+                    self.transition_soul.alpha = self.transition_soul.alpha - 0.1
+                else
+                    self.transitioning_to_battle = false
+                end
+            end
+        end
+        self.transition_timer = self.transition_timer + 1
+    end
+    
+
+    function self.EnterBattleInstant(battle)
+        Audio.Stop()
+        Misc.MoveCameraTo(0,0) -- Battles always start at (0,0)
+
+        local modpath = self.GetModName()
+        music = nil
+        
+        local old_Update = Update
+
+        Update = nil
+        dofile(modpath.modPath .. "/Lua/Encounters/" .. battle .. ".lua")
+
+        self.UpdateBattle = Update
+
+        Update = old_Update
+
+        if music then
+            Audio.LoadFile(music)
+        end
+
+        self.inbattle = true
+        self.ShowBattle()
+        
+        StateHandler.ResetState()
+
+        SetAction("FIGHT")
+        State("ACTIONSELECT") -- Encounters start in ACTIONSELECT; it should do that here too
+
+        -- Now we have to spawn the enemies used in the battle.
+        local enemy_objects = {} -- Temporary table to store the enemy objects
+
+        for enemy_index = 1, #enemies do -- For all enemies in the table,
+            local enemy_string = enemies[enemy_index]
+            local enemy_position = enemypositions[enemy_index]
+            local enemy = CreateEnemy(enemy_string,enemy_position[1],enemy_position[2]) -- Spawn the enemies
+            table.insert(enemy_objects,enemy) -- Put the enemy objects in the temporary table
+        end
+
+        enemies = enemy_objects -- Now that we've finished reading from the table, we can set it to the object table
+        enemy_objects = nil -- Cleanup! this isn't required probably but it makes me feel better
+
+        EncounterStarting() -- We're ready!
+    end
+
+
+    function self.ShowBattle()
+        for layer_id = #self.tile_layers, 1, -1 do
+            for tile_id = #self.tile_layers[layer_id], 1, -1 do
+                local tile = self.tile_layers[layer_id][tile_id]
+                if tile.sprite then
+                    tile.sprite.sprite.alpha = 0
+                    tile.sprite.mask.alpha = 0
+                end
             end
         end
 
-		local old_x = self.player.x
-		local old_y = self.player.y
-        if not self.cutscene_active and not self.transitioning_to_room then
-            self.TakeInput()
+        for event_id = #self.mapdata.events, 1, -1 do
+            local event = self.mapdata.events[event_id]
+            event.sprite.alpha = 0
         end
-        self.UpdatePlayerSprite(self.player.x ~= old_x or self.player.y ~= old_y or self.murderdancing)
-        if self.mapdata.Update then self.mapdata.Update() end
-        self.UpdateEvents()
-        SceneManager.Update()
-        OverworldTextbox.Update()
-        self.UpdateCamera() -- TODO: Move to Camera.Update()
-        self.UpdateTiles()
-        self.UpdateAnimatedTiles()
-        self.UpdateRoomTransition()
+        self.background.alpha = 0
+        self.player.sprite.alpha = 0
+    end
 
+    function self.HideBattle()
+        for layer_id = #self.tile_layers, 1, -1 do
+            for tile_id = #self.tile_layers[layer_id], 1, -1 do
+                local tile = self.tile_layers[layer_id][tile_id]
+                if tile.sprite then
+                    tile.sprite.sprite.alpha = 1
+                    tile.sprite.mask.alpha = 1
+                end
+            end
+        end
 
-        if self.mapdata.Update then self.mapdata.Update() end
-        self.animationtimer = self.animationtimer + 1
-
-        --if not OverworldTextbox.textActive then
-        --    self.cutscene_active = false
-        --end
+        for event_id = #self.mapdata.events, 1, -1 do
+            local event = self.mapdata.events[event_id]
+            event.sprite.alpha = 1
+        end
+        self.background.alpha = 1
+        self.player.sprite.alpha = 1
     end
 
     function self.UnloadMap()
@@ -177,8 +399,6 @@ return (function()
             else
                 self.transition_fader.alpha = self.transition_fader.alpha - 0.06
             end
-        else
-            self.transition_fader.alpha = 0
         end
     end
 
@@ -276,10 +496,10 @@ return (function()
             event.sprite.xscale = self.mapdata.scale.x
             event.sprite.yscale = self.mapdata.scale.y
 
-            event.sprite.SetPivot(0,0)
+            event.sprite.SetPivot(0.5,0)
             event.sprite.SetAnchor(0,0)
 
-            event.sprite.x = event.x + (event.sprite_offset.x * self.mapdata.scale.x ) + 0.01
+            event.sprite.x = event.x + (event.sprite_offset.x * self.mapdata.scale.x ) + ((event.data.width * self.mapdata.scale.x) / 2) + 0.01
             event.sprite.y = event.y + (event.sprite_offset.y * self.mapdata.scale.y ) + 0.01
         end
 
@@ -295,7 +515,18 @@ return (function()
             end
         end
 
+        if event.AfterLoad then event.AfterLoad() end
+
         table.insert(self.mapdata.events,event)
+    end
+    
+    function self.GetEventRect(event)
+        return self.rect(
+                        (event.hitbox_offset.x * self.mapdata.scale.x) + event.x,
+                        (event.hitbox_offset.x * self.mapdata.scale.x) + event.x + (event.hitbox_size.x * self.mapdata.scale.x),
+                        (event.hitbox_offset.y * self.mapdata.scale.y) + event.y,
+                        (event.hitbox_offset.y * self.mapdata.scale.y) + event.y + (event.hitbox_size.y * self.mapdata.scale.y)
+                        )
     end
 
     function self.UpdateEvents()
@@ -303,12 +534,7 @@ return (function()
             local event = self.mapdata.events[event_id]
 
 
-            local event_rect = self.rect(
-                                        (event.hitbox_offset.x * self.mapdata.scale.x) + event.x,
-                                        (event.hitbox_offset.x * self.mapdata.scale.x) + event.x + (event.hitbox_size.x * self.mapdata.scale.x),
-                                        (event.hitbox_offset.y * self.mapdata.scale.y) + event.y,
-                                        (event.hitbox_offset.y * self.mapdata.scale.y) + event.y + (event.hitbox_size.y * self.mapdata.scale.y)
-                                        )
+            local event_rect = self.GetEventRect(event)
 
             if event.OnCollide and not event.removed then
                 local player_rect = self.rect(
@@ -349,8 +575,15 @@ return (function()
             if event.Update and not event.removed then event.Update() end
 
             if not event.removed then
-                event.sprite.x = event.x + (event.sprite_offset.x * self.mapdata.scale.x ) + 0.01
+                event.sprite.x = event.x + (event.sprite_offset.x * self.mapdata.scale.x ) + ((event.data.width * self.mapdata.scale.x) / 2) + 0.01
                 event.sprite.y = event.y + (event.sprite_offset.y * self.mapdata.scale.y ) + 0.01
+                if event.uses_depth then
+                    if self.player.y < event.sprite.y + (event.depth_offset * self.mapdata.scale.y) then
+                        event.sprite.layer = "Objects"
+                    else
+                        event.sprite.layer = "ObjectsAbove"
+                    end
+                end
             end
         end
     end
@@ -454,8 +687,13 @@ return (function()
                 for object_id = 1, #current_layer.objects do
                     local object = current_layer.objects[object_id]
                     if object.name == "start" then
-                        self.DEBUG("Player start found at (" .. object.x .. ", " .. object.y .. ")")
-                        self.playerstart = {object.x, object.y}
+                        local object_x = object.x
+                        local object_y = object.y + (object.height)
+                        if object.height == 0 then
+                            object_y = object.y + (object.height / 2)
+                        end
+                        self.DEBUG("Player start found at (" .. object_x .. ", " .. object_y .. ")")
+                        self.playerstart = {object_x, object_y}
                     else
                         self.DEBUG("Event " .. object.name .. " found")
                         self.LoadEvent(object)
@@ -603,6 +841,8 @@ return (function()
 
         self.player.sprite.x = self.player.x
         self.player.sprite.y = self.player.y
+        
+        self.player.sprite.Scale(self.player.size[1],self.player.size[2])
 
 
         self.player.debugpoint = CreateSprite("px","Objects")
@@ -683,12 +923,7 @@ return (function()
             local event = self.mapdata.events[event_id]
             if event.solid then
 
-                local event_rect = self.rect(
-                            (event.hitbox_offset.x * self.mapdata.scale.x) + event.x,
-                            (event.hitbox_offset.x * self.mapdata.scale.x) + event.x + (event.hitbox_size.x * self.mapdata.scale.x),
-                            (event.hitbox_offset.y * self.mapdata.scale.y) + event.y,
-                            (event.hitbox_offset.y * self.mapdata.scale.y) + event.y + (event.hitbox_size.y * self.mapdata.scale.y)
-                            )
+                local event_rect = self.GetEventRect(event)
 
                 local player_rect = self.rect(self.player.x,self.player.x+self.player.hitbox_size.x,self.player.y,self.player.y+self.player.hitbox_size.y)
                 local infbreaker = 0
@@ -874,9 +1109,13 @@ return (function()
         self.player.sprite.y = self.player.y
 
 
+        if self.cutscene_active or self.transitioning_to_room or self.transitioning_to_battle then
+            moving = false
+        end
+
         -- Animation code... this is very ugly, but it's accurate.
 
-        if not self.cutscene_active and not self.transitioning_to_room then
+        if not self.cutscene_active and not self.transitioning_to_room and not self.transitioning_to_battle then
 
             if Input.Left > 0 then
                 self.turned = true

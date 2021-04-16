@@ -21,11 +21,19 @@ function main()
 
     self.solid = false
 
-    function self.OnCollide()
-        SceneManager.Start(self.properties["name"])
-        self.Destroy()
+    function self.AfterLoad()
+        self.hitbox_size = {
+            x = self.data["width"],
+            y = self.data["height"]
+        }
     end
 
+    function self.OnCollide()
+        SceneManager.Start(self.properties["name"])
+        if not self.properties["dont_remove"] then
+            self.Destroy()
+        end
+    end
 
     function self.Update() end
     return self -- Don't remove this line

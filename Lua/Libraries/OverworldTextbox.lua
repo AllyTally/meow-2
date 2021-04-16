@@ -1,9 +1,7 @@
 local self = {}
 
--- made by eir who is hella cute also    love eir    <3
---   eir cute
---       meow
-
+-- Library made from Eir, originally for JARPE
+-- Modified to be overworld textboxes
 
 --==============--
 -- UI VARIABLES --
@@ -103,10 +101,17 @@ function self.ShowTextBox(top,portrait)
     scaleY = 2
     if self.current_settings then
         if self.current_settings[self.current_progress] then
-            if self.current_settings[self.current_progress].offsetX then offsetX = self.current_settings[self.current_progress].offsetX end
-            if self.current_settings[self.current_progress].offsetY then offsetX = self.current_settings[self.current_progress].offsetY end
-            if self.current_settings[self.current_progress].scaleX  then scaleX  = self.current_settings[self.current_progress].scaleX  end
-            if self.current_settings[self.current_progress].scaleY  then scaleY  = self.current_settings[self.current_progress].scaleY  end
+            if self.current_settings[self.current_progress].offsetX    then offsetX = self.current_settings[self.current_progress].offsetX end
+            if self.current_settings[self.current_progress].offsetY    then offsetX = self.current_settings[self.current_progress].offsetY end
+            if self.current_settings[self.current_progress].scaleX     then scaleX  = self.current_settings[self.current_progress].scaleX  end
+            if self.current_settings[self.current_progress].scaleY     then scaleY  = self.current_settings[self.current_progress].scaleY  end
+            if self.current_settings[self.current_progress].animateNPC then
+                NPCHelper.StartTalking(
+                    self.current_settings[self.current_progress].animateNPC,
+                    self.current_settings[self.current_progress].NPCanimation,
+                    self.current_settings[self.current_progress].NPCanimation_after
+                )
+            end
         end
     end
     self.menufacesprite.Scale(scaleX,scaleY)
@@ -173,8 +178,8 @@ function self.SetText(str,top,portrait,options)
 	-- Format the text from the SetDialog call
 	local textStars, textTable = self.FormatText(i)
 
-	table.insert(textStars, "")
-	table.insert(textTable, "")
+	table.insert(textStars, "[noskip][w:60]")
+	table.insert(textTable, "[noskip][w:60]")
 
 	-- Display the text
 	self.textStars.SetText(textStars)
@@ -189,6 +194,7 @@ function self.Update()
 	if self.textActive then
         if self.text.lineComplete then
             self.menufacesprite.StopAnimation()
+            NPCHelper.StopTalking()
             if type(self.current_portrait) == "table" then
                 if type(self.current_portrait[self.current_progress]) == "table" then
                     self.menufacesprite.Set(self.current_portrait[self.current_progress][1])
@@ -217,10 +223,17 @@ function self.NextLine()
     scaleY = 2
     if self.current_settings then
         if self.current_settings[self.current_progress] then
-            if self.current_settings[self.current_progress].offsetX then offsetX = self.current_settings[self.current_progress].offsetX end
-            if self.current_settings[self.current_progress].offsetY then offsetX = self.current_settings[self.current_progress].offsetY end
-            if self.current_settings[self.current_progress].scaleX  then scaleX  = self.current_settings[self.current_progress].scaleX  end
-            if self.current_settings[self.current_progress].scaleY  then scaleY  = self.current_settings[self.current_progress].scaleY  end
+            if self.current_settings[self.current_progress].offsetX    then offsetX = self.current_settings[self.current_progress].offsetX end
+            if self.current_settings[self.current_progress].offsetY    then offsetX = self.current_settings[self.current_progress].offsetY end
+            if self.current_settings[self.current_progress].scaleX     then scaleX  = self.current_settings[self.current_progress].scaleX  end
+            if self.current_settings[self.current_progress].scaleY     then scaleY  = self.current_settings[self.current_progress].scaleY  end
+            if self.current_settings[self.current_progress].animateNPC then
+                NPCHelper.StartTalking(
+                                       self.current_settings[self.current_progress].animateNPC,
+                                       self.current_settings[self.current_progress].NPCanimation,
+                                       self.current_settings[self.current_progress].NPCanimation_after
+                )
+            end
         end
     end
     self.menufacesprite.Scale(scaleX,scaleY)
