@@ -4,6 +4,10 @@ return (function()
     -- Don't touch anything before these lines
     
     self.name = "Frisk" -- The player name. Unused by default.
+    
+    self.xp = 0
+    self.gold = 0
+    self.lv = 1
 
     self.size = {1, 1} -- The player's size.
     self.speed = 3

@@ -2,13 +2,12 @@
 
 --music = "field_of_hopes" -- The music you want to load!
 
-music = "mus_hereweare"
+music = "mus_ruins"
 
 map = "ruins1"
 
 function OverworldStarting()
     -- Do something here! This is called after the Overworld module is initialized.
-    Audio.Stop()
 end
 
 function Update()

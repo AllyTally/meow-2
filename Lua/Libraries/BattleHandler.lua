@@ -1,8 +1,6 @@
 local self
 self = { }
 
--- TODO: "Ran away with {0} EXP\rand {1} GOLD."
-
 self.xp = 0
 self.gold = 0
 
@@ -27,12 +25,19 @@ self.possible_flee_text = {
     "I'm outta here."
 }
 
+self.flee_text_gold = "Ran away with {xp} EXP\rand {gold} GOLD."
+
 self.win_text = "YOU WON!\nYou earned {xp} XP and {gold} gold."
+self.win_text_love = "YOU WON!\nYou earned {xp} XP and {gold} gold.\nYour LOVE increased."
+
+self.level_up_table = { 10, 30, 70, 120, 200, 300, 500, 800, 1200, 1700, 2500, 3500, 5000, 7000, 10000, 15000, 25000, 50000, 99999, 100000 };
 
 function self.ResetState()
     if self.fleesprite then
         self.fleesprite.Remove()
     end
+    self.xp = 0
+    self.gold = 0
     self.fleesprite = nil
     self.fleeing = false
     self.current_flee_success = 50
@@ -41,28 +46,65 @@ function self.ResetState()
     Player.sprite.alpha = 1
 end
 
+function self.SpawnEnemies()
+    local enemy_objects = {} -- Temporary table to store the enemy objects
+
+    for enemy_index = 1, #enemies do -- For all enemies in the table,
+        local enemy_string = enemies[enemy_index]
+        local enemy_position = enemypositions[enemy_index]
+        local enemy = CreateEnemy(enemy_string,enemy_position[1],enemy_position[2]) -- Spawn the enemies
+        
+        enemy.Call("require","Libraries/MonsterWrapper")
+        
+        table.insert(enemy_objects,enemy) -- Put the enemy objects in the temporary table
+    end
+
+    enemies = enemy_objects -- Now that we've finished reading from the table, we can set it to the object table
+    enemy_objects = nil -- Cleanup! this isn't required probably but it makes me feel better
+end
+
 function self.TrySpare()
     self.HideMercyMenu()
+    local enemies_left = false
     for enemy_id = 1, #enemies do
         local enemy = enemies[enemy_id]
-        enemy.call("Spare")
+        if enemy["canspare"] then
+            self.EnteringStateDisabled = true
+            enemy.call("OnSpare")
+            self.EnteringStateDisabled = false
+        else
+            enemies_left = true
+        end
+    end
+
+    if enemies_left then
+        State("ENEMYDIALOGUE")
+    else
+        self.BattleResults(true)
     end
 end
 
-function self.CalculateStats()
-    -- ugh.
-    self.gold = 0
-    self.xp = 0
-    for i = 1, #enemies do
-        self.gold = self.gold + enemies[i]["gold"]
-        self.xp = self.xp + enemies[i]["xp"]
+function self.BattleResults(spare)
+    self.custom_state = nil
+    
+    leveled_up = self.CheckLevel()
+
+    self.EnteringStateDisabled = true
+    if leveled_up then
+        Audio.PlaySound("levelup")
+        BattleDialogue({self.win_text_love:gsub("{xp}",self.xp):gsub("{gold}",self.gold),"[noskip][func:callback][starcolor:000000][instant]"})
+    else
+        BattleDialogue({self.win_text:gsub("{xp}",self.xp):gsub("{gold}",self.gold),"[noskip][func:callback][starcolor:000000][instant]"})
     end
+    self.EnteringStateDisabled = false
 end
 
 function self.CheckForSpare()
     for i = 1, #enemies do
-        if enemies[i]["canspare"] then
-            return true
+        if enemies[i]["isactive"] then
+            if enemies[i]["canspare"] then
+                return true
+            end
         end
     end
     return false
@@ -104,13 +146,45 @@ function self.StartFlee()
     Player.sprite.alpha = 0
     Audio.Stop()
     Audio.PlaySound("runaway")
-    BattleDialogue({self.possible_flee_text[math.random(#self.possible_flee_text)],"[noskip][func:callback][starcolor:000000][instant]"})
+    if self.gold ~= 0 or self.xp ~= 0 then
+        BattleDialogue({self.flee_text_gold:gsub("{xp}",self.xp):gsub("{gold}",self.gold),"[noskip][func:callback][starcolor:000000][instant]"})
+        leveled_up = self.CheckLevel()
+        if leveled_up then
+            Audio.PlaySound("levelup")
+        end
+    else
+        BattleDialogue({self.possible_flee_text[math.random(#self.possible_flee_text)],"[noskip][func:callback][starcolor:000000][instant]"})
+    end
+end
+
+function self.CheckLevel()
+    Overworld.player.xp = Overworld.player.xp + self.xp
+    Overworld.player.gold = Overworld.player.gold + self.gold
+    if (Overworld.player.lv > 20) then
+        Player.lv = Overworld.player.lv
+        return false
+    end
+    for i = 1, #self.level_up_table do
+        if (Overworld.player.xp < self.level_up_table[i]) then
+            if (Overworld.player.lv == i) then
+                Player.lv = Overworld.player.lv
+                return false
+            end
+            Overworld.player.lv = i
+            Player.lv = i
+            return true
+        end
+    end
+    Player.lv = Overworld.player.lv
+    return false
 end
 
 local _State = State
 function State(state)
     self.custom_state = nil
     if state == "MERCYMENU" then
+        self.fleeing = false
+        Player.sprite.alpha = 1
         if encountertext ~= "[starcolor:000000][instant]" then
             self.old_encountertext = encountertext
         end
@@ -187,8 +261,7 @@ function EnteringState(new_state,old_state)
             end
         end
         if thing then
-            self.CalculateStats()
-            BattleDialogue({self.win_text:gsub("{xp}",self.xp):gsub("{gold}",self.gold),"[noskip][func:callback][starcolor:000000][instant]"})
+            self.BattleResults(false)
         end
     end
     if _EnteringState then

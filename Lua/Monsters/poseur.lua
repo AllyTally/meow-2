@@ -12,7 +12,7 @@ gold = 10
 xp = 200
 check = "Check message goes here."
 dialogbubble = "right" -- See documentation for what bubbles you have available.
-canspare = false
+canspare = true
 cancheck = true
 
 -- Happens after the slash animation but before 

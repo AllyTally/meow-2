@@ -15,8 +15,7 @@ return (function()
         -- Create the layers used in this module
         CreateLayer("OWBackground", "Top")
         CreateLayer("Tiles", "OWBackground")
-        CreateLayer("Tiles2", "Tiles")
-        CreateLayer("Objects", "Tiles2")
+        CreateLayer("Objects", "Tiles")
         CreateLayer("Player", "Objects")
         CreateLayer("ObjectsAbove", "Player")
         CreateLayer("Textbox","ObjectsAbove")
@@ -26,7 +25,7 @@ return (function()
         OverworldTextbox = require "OverworldTextbox"
         SceneManager     = require "SceneManager"
         NPCHelper        = require "NPCHelper"
-        StateHandler     = require "StateHandler"
+        BattleHandler    = require "BattleHandler"
 
         -- Animation timer
         self.animationtimer = 0
@@ -73,6 +72,9 @@ return (function()
         self.transition_soul.Scale(2,2)
         self.transition_soul.alpha = 0
         self.transition_soul.color = { 1, 0, 0 }
+        
+        self.pre_battle_audio = "empty"
+        self.pre_battle_time = 0
 
 
         -- Create settings to be changed in EncounterStarting
@@ -142,7 +144,7 @@ return (function()
 
         else
             self.UpdateBattleTransition()
-            StateHandler.Update()
+            BattleHandler.Update()
             if self.UpdateBattle then self.UpdateBattle() end
         end
 
@@ -162,6 +164,11 @@ return (function()
         self.transition_timer = 0
         self.transition_fader.alpha = 0
         self.player.sprite.layer = "Player"
+        if self.pre_battle_audio ~= "empty" then
+            Audio.LoadFile(self.pre_battle_audio)
+            Audio.playtime = self.pre_battle_time
+        end
+        if self.mapdata.AfterBattle then self.mapdata.AfterBattle() end
     end
 
     function self.EnterBattle(battle)
@@ -188,6 +195,8 @@ return (function()
         --self.transition_soul.MoveTo(self.transition_soul.x-OWCamera.x,self.transition_soul.y-OWCamera.y)
 
         self.transition_battle = battle
+        self.pre_battle_audio = NewAudio.GetAudioName("src", false)
+        self.pre_battle_time = Audio.playtime
         Audio.Stop()
 
     end
@@ -246,7 +255,7 @@ return (function()
                     if self.transition_timer > 40 then
                         self.transition_timer = 2000
                         self.transition_soul.MoveTo(self.transition_soul.x - self.camera_pos_x,self.transition_soul.y - self.camera_pos_y)
-                        self.EnterBattleInstant(self.transition_battle)
+                        self.EnterBattleInstant(self.transition_battle,false)
                         self.transition_fader.MoveTo(320,240)
                     end
                 end
@@ -264,14 +273,21 @@ return (function()
     end
     
 
-    function self.EnterBattleInstant(battle)
-        Audio.Stop()
+    function self.EnterBattleInstant(battle,stop_audio)
+        if stop_audio then
+            self.pre_battle_audio = NewAudio.GetAudioName("src", false)
+            self.pre_battle_time = Audio.playtime
+            Audio.Stop()
+            
+        end
         Misc.MoveCameraTo(0,0) -- Battles always start at (0,0)
 
         local modpath = self.GetModName()
         music = nil
         
         local old_Update = Update
+
+        Player.lv = self.player.lv
 
         Update = nil
         dofile(modpath.modPath .. "/Lua/Encounters/" .. battle .. ".lua")
@@ -282,28 +298,22 @@ return (function()
 
         if music then
             Audio.LoadFile(music)
+            Audio.playtime = 0
         end
 
         self.inbattle = true
         self.ShowBattle()
         
-        StateHandler.ResetState()
+        BattleHandler.ResetState()
 
+        local _EnteringState = EnteringState
+        function EnteringState() end -- We have to disable EnteringState before changing the state
         SetAction("FIGHT")
         State("ACTIONSELECT") -- Encounters start in ACTIONSELECT; it should do that here too
+        EnteringState = _EnteringState -- Reset it
+        _EnteringState = nil
 
-        -- Now we have to spawn the enemies used in the battle.
-        local enemy_objects = {} -- Temporary table to store the enemy objects
-
-        for enemy_index = 1, #enemies do -- For all enemies in the table,
-            local enemy_string = enemies[enemy_index]
-            local enemy_position = enemypositions[enemy_index]
-            local enemy = CreateEnemy(enemy_string,enemy_position[1],enemy_position[2]) -- Spawn the enemies
-            table.insert(enemy_objects,enemy) -- Put the enemy objects in the temporary table
-        end
-
-        enemies = enemy_objects -- Now that we've finished reading from the table, we can set it to the object table
-        enemy_objects = nil -- Cleanup! this isn't required probably but it makes me feel better
+        BattleHandler.SpawnEnemies()
 
         EncounterStarting() -- We're ready!
     end
@@ -311,12 +321,16 @@ return (function()
 
     function self.ShowBattle()
         for layer_id = #self.tile_layers, 1, -1 do
-            for tile_id = #self.tile_layers[layer_id], 1, -1 do
-                local tile = self.tile_layers[layer_id][tile_id]
-                if tile.sprite then
-                    tile.sprite.sprite.alpha = 0
-                    tile.sprite.mask.alpha = 0
+            if type(self.tile_layers[layer_id]) == "table" then
+                for tile_id = #self.tile_layers[layer_id], 1, -1 do
+                    local tile = self.tile_layers[layer_id][tile_id]
+                    if tile.sprite then
+                        tile.sprite.sprite.alpha = 0
+                        tile.sprite.mask.alpha = 0
+                    end
                 end
+            elseif type(self.tile_layers[layer_id]) == "userdata" then
+                self.tile_layers[layer_id].alpha = 0
             end
         end
 
@@ -330,12 +344,16 @@ return (function()
 
     function self.HideBattle()
         for layer_id = #self.tile_layers, 1, -1 do
-            for tile_id = #self.tile_layers[layer_id], 1, -1 do
-                local tile = self.tile_layers[layer_id][tile_id]
-                if tile.sprite then
-                    tile.sprite.sprite.alpha = 1
-                    tile.sprite.mask.alpha = 1
+            if type(self.tile_layers[layer_id]) == "table" then
+                for tile_id = #self.tile_layers[layer_id], 1, -1 do
+                    local tile = self.tile_layers[layer_id][tile_id]
+                    if tile.sprite then
+                        tile.sprite.sprite.alpha = 1
+                        tile.sprite.mask.alpha = 1
+                    end
                 end
+            elseif type(self.tile_layers[layer_id]) == "userdata" then
+                self.tile_layers[layer_id].alpha = 1
             end
         end
 
@@ -348,17 +366,20 @@ return (function()
     end
 
     function self.UnloadMap()
-
         for layer_id = #self.tile_layers, 1, -1 do
-            for tile_id = #self.tile_layers[layer_id], 1, -1 do
-                local tile = self.tile_layers[layer_id][tile_id]
-
-                if tile.sprite then
-                    tile.sprite.sprite.Remove()
-                    tile.sprite.mask.Remove()
-                    tile.sprite = nil
+            if type(self.tile_layers[layer_id]) == "table" then
+                for tile_id = #self.tile_layers[layer_id], 1, -1 do
+                    local tile = self.tile_layers[layer_id][tile_id]
+    
+                    if tile.sprite then
+                        tile.sprite.sprite.Remove()
+                        tile.sprite.mask.Remove()
+                        tile.sprite = nil
+                    end
+                    tile = nil
                 end
-                tile = nil
+            elseif type(self.tile_layers[layer_id]) == "userdata" then
+                self.tile_layers[layer_id].Remove()
             end
             self.tile_layers[layer_id] = nil
         end
@@ -421,23 +442,29 @@ return (function()
     function self.UpdateTiles()
 
         for layer_id = 1, #self.tile_layers do
-            for tile_id = #self.tile_layers[layer_id], 1, -1 do
-                local tile = self.tile_layers[layer_id][tile_id]
-
-                if (tile.x > self.camera_pos_x - (self.tilemapdata.tilewidth * self.mapdata.scale.x)) and
-                   (tile.x < self.camera_pos_x + 640) and
-                   (tile.y > self.camera_pos_y) and
-                   (tile.y < self.camera_pos_y + 480 + (self.tilemapdata.tileheight * self.mapdata.scale.y)) then
-                    if not tile.sprite then
-                        tile.sprite = self.CreateTileSprite(tile.tileset,tile.id,tile.x,tile.y,self.mapdata.internalname)
-                    end
-                else
-                    if tile.sprite then
-                        tile.sprite.sprite.Remove()
-                        tile.sprite.mask.Remove()
-                        tile.sprite = nil
+            if type(self.tile_layers[layer_id]) == "table" then
+                for tile_id = #self.tile_layers[layer_id], 1, -1 do
+                    local tile = self.tile_layers[layer_id][tile_id]
+                
+                    if (tile.x > self.camera_pos_x - (self.tilemapdata.tilewidth * self.mapdata.scale.x)) and
+                    (tile.x < self.camera_pos_x + 640) and
+                    (tile.y > self.camera_pos_y) and
+                    (tile.y < self.camera_pos_y + 480 + (self.tilemapdata.tileheight * self.mapdata.scale.y)) then
+                        if not tile.sprite then
+                            tile.sprite = self.CreateTileSprite(tile.tileset,tile.id,tile.x,tile.y,self.mapdata.internalname)
+                        end
+                        tile.sprite.sprite.SendToTop()
+                        tile.sprite.mask.SendToTop()
+                    else
+                        if tile.sprite then
+                            tile.sprite.sprite.Remove()
+                            tile.sprite.mask.Remove()
+                            tile.sprite = nil
+                        end
                     end
                 end
+            elseif type(self.tile_layers[layer_id]) == "userdata" then
+                self.tile_layers[layer_id].SendToTop()
             end
         end
     end
@@ -736,12 +763,13 @@ return (function()
                     end
                 end
             elseif current_layer.type == "imagelayer" then
-                local image = CreateSprite("../Maps/" .. mapname .. "/" .. current_layer.image:sub(1, -5),"Tiles2")
+                local image = CreateSprite("../Maps/" .. mapname .. "/" .. current_layer.image:sub(1, -5),"Tiles")
                 image.SetPivot(0,1)
                 image.x = current_layer.offsetx * self.mapdata.scale.x
                 image.y = ((self.tilemapdata.height * self.tilemapdata.tileheight) - current_layer.offsety)*self.mapdata.scale.y
                 image.Scale(self.mapdata.scale.x,self.mapdata.scale.y)
-                table.insert(self.images,image)
+                --table.insert(self.images,image)
+                table.insert(self.tile_layers,image)
             else
                 self.DEBUG("UNSUPPORTED LAYER TYPE: " .. current_layer.type)
             end

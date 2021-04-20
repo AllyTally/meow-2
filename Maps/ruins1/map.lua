@@ -14,6 +14,7 @@ return (function()
     function self.Update()       end -- Called every frame
     function self.OnLeave()      end -- Called the moment the fade-out transition starts
     function self.BeforeUnload() end -- Called right before the map gets unloaded
+    function self.AfterBattle()  end -- Called right after you return from a battle
 
     -- Don't touch anything after these lines
     return self
