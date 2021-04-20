@@ -26,6 +26,7 @@ return (function()
         SceneManager     = require "SceneManager"
         NPCHelper        = require "NPCHelper"
         BattleHandler    = require "BattleHandler"
+        LayerHandler     = require "LayerHandler"
 
         -- Animation timer
         self.animationtimer = 0
@@ -61,18 +62,18 @@ return (function()
         self.transition_fader.color = {0,0,0}
         self.transition_fader.Scale(640,480)
         self.transition_fader.alpha = 0
-        
+
         -- Battle transitioning
         self.transitioning_to_battle = false
         self.transitioning_from_battle = false
         self.transition_timer = 0
         self.transition_battle = nil
 
-        self.transition_soul = CreateSprite("spr_heartsmall", "SuperTop")
+        self.transition_soul = CreateSprite("spr_heartsmall", "Fader")
         self.transition_soul.Scale(2,2)
         self.transition_soul.alpha = 0
         self.transition_soul.color = { 1, 0, 0 }
-        
+
         self.pre_battle_audio = "empty"
         self.pre_battle_time = 0
 
@@ -99,9 +100,9 @@ return (function()
 
         self.camera_pos_x = 0
         self.camera_pos_y = 0
-        
+
         self.inbattle = false
-        
+
         self.UpdateBattle = nil
     end
 
@@ -177,16 +178,16 @@ return (function()
 
         self.transition_fader.alpha = 1
 
-        self.player.sprite.layer = "SuperTop"
+        self.player.sprite.layer = "Fader"
 
-        self.transition_soul.layer = "SuperTop"
+        self.transition_soul.layer = "Fader"
         self.transition_soul.SendToTop()
         self.transition_soul.alpha = 1
 
-        
+
         local soul_x = self.player.x + (self.player.soul_position.x * self.player.size[1])
         local soul_y = self.player.y + (self.player.soul_position.y * self.player.size[2])
-        
+
         self.transition_soul.x = soul_x
         self.transition_soul.y = soul_y
 
@@ -236,7 +237,7 @@ return (function()
                 self.transition_soul.alpha = 0
             end
 
-            
+
             if self.transition_timer == 20 then
                 self.player.sprite.alpha = 0
                 Audio.PlaySound("BeginBattle3", 0.65)
@@ -271,20 +272,20 @@ return (function()
         end
         self.transition_timer = self.transition_timer + 1
     end
-    
+
 
     function self.EnterBattleInstant(battle,stop_audio)
         if stop_audio then
             self.pre_battle_audio = NewAudio.GetAudioName("src", false)
             self.pre_battle_time = Audio.playtime
             Audio.Stop()
-            
+
         end
         Misc.MoveCameraTo(0,0) -- Battles always start at (0,0)
 
         local modpath = self.GetModName()
         music = nil
-        
+
         local old_Update = Update
 
         Player.lv = self.player.lv
@@ -303,7 +304,7 @@ return (function()
 
         self.inbattle = true
         self.ShowBattle()
-        
+
         BattleHandler.ResetState()
 
         local _EnteringState = EnteringState
@@ -320,17 +321,18 @@ return (function()
 
 
     function self.ShowBattle()
-        for layer_id = #self.tile_layers, 1, -1 do
-            if type(self.tile_layers[layer_id]) == "table" then
-                for tile_id = #self.tile_layers[layer_id], 1, -1 do
-                    local tile = self.tile_layers[layer_id][tile_id]
+        for layer_id = 1, #LayerHandler.layers do
+            local layer = LayerHandler.layers[layer_id]
+            if layer.type == "tiles" then
+                for tile_id = #layer.tiles, 1, -1 do
+                    local tile = layer.tiles[tile_id]
                     if tile.sprite then
                         tile.sprite.sprite.alpha = 0
                         tile.sprite.mask.alpha = 0
                     end
                 end
-            elseif type(self.tile_layers[layer_id]) == "userdata" then
-                self.tile_layers[layer_id].alpha = 0
+            elseif layer.type == "image" then
+                layer.sprite.alpha = 0
             end
         end
 
@@ -342,18 +344,20 @@ return (function()
         self.player.sprite.alpha = 0
     end
 
+
     function self.HideBattle()
-        for layer_id = #self.tile_layers, 1, -1 do
-            if type(self.tile_layers[layer_id]) == "table" then
-                for tile_id = #self.tile_layers[layer_id], 1, -1 do
-                    local tile = self.tile_layers[layer_id][tile_id]
+        for layer_id = 1, #LayerHandler.layers do
+            local layer = LayerHandler.layers[layer_id]
+            if layer.type == "tiles" then
+                for tile_id = #layer.tiles, 1, -1 do
+                    local tile = layer.tiles[tile_id]
                     if tile.sprite then
                         tile.sprite.sprite.alpha = 1
                         tile.sprite.mask.alpha = 1
                     end
                 end
-            elseif type(self.tile_layers[layer_id]) == "userdata" then
-                self.tile_layers[layer_id].alpha = 1
+            elseif layer.type == "image" then
+                layer.sprite.alpha = 1
             end
         end
 
@@ -366,11 +370,12 @@ return (function()
     end
 
     function self.UnloadMap()
-        for layer_id = #self.tile_layers, 1, -1 do
-            if type(self.tile_layers[layer_id]) == "table" then
-                for tile_id = #self.tile_layers[layer_id], 1, -1 do
-                    local tile = self.tile_layers[layer_id][tile_id]
-    
+        for layer_id = 1, #LayerHandler.layers do
+            local layer = LayerHandler.layers[layer_id]
+            if layer.type == "tiles" then
+                for tile_id = #layer.tiles, 1, -1 do
+                    local tile = layer.tiles[tile_id]
+
                     if tile.sprite then
                         tile.sprite.sprite.Remove()
                         tile.sprite.mask.Remove()
@@ -378,14 +383,14 @@ return (function()
                     end
                     tile = nil
                 end
-            elseif type(self.tile_layers[layer_id]) == "userdata" then
-                self.tile_layers[layer_id].Remove()
+                layer.sprite.Remove()
+                layer.tiles = {}
+            elseif layer.type == "image" then
+                layer.sprite.Remove()
             end
-            self.tile_layers[layer_id] = nil
+            layer = nil
         end
-        self.tile_layers = {}
-
-
+        LayerHandler.layers = {}
 
         for event_id = #self.mapdata.events, 1, -1 do
             local event = self.mapdata.events[event_id]
@@ -397,6 +402,34 @@ return (function()
 
         self.collision_rectangles = {}
         self.collision_triangles = {}
+    end
+
+    function self.UpdateTiles()
+        for layer_id = 1, #LayerHandler.layers do
+            local layer = LayerHandler.layers[layer_id]
+
+            if (layer.type == "tiles") then
+                for tile_id = #layer.tiles, 1, -1 do
+                    local tile = layer.tiles[tile_id]
+
+                    if (tile.x > self.camera_pos_x - (self.tilemapdata.tilewidth * self.mapdata.scale.x)) and
+                       (tile.x < self.camera_pos_x + 640) and
+                       (tile.y > self.camera_pos_y) and
+                       (tile.y < self.camera_pos_y + 480 + (self.tilemapdata.tileheight * self.mapdata.scale.y)) then
+                        if not tile.sprite then
+                            tile.sprite = self.CreateTileSprite(tile.tileset,tile.id,tile.x,tile.y,self.mapdata.internalname)
+                            tile.sprite.mask.SetParent(layer.sprite)
+                        end
+                    else
+                        if tile.sprite then
+                            tile.sprite.sprite.Remove()
+                            tile.sprite.mask.Remove()
+                            tile.sprite = nil
+                        end
+                    end
+                end
+            end
+        end
     end
 
     function self.UpdateRoomTransition()
@@ -437,36 +470,6 @@ return (function()
         SceneManager.Start(function()
             SceneManager.SpawnTextbox(text,portrait,options)
         end)
-    end
-
-    function self.UpdateTiles()
-
-        for layer_id = 1, #self.tile_layers do
-            if type(self.tile_layers[layer_id]) == "table" then
-                for tile_id = #self.tile_layers[layer_id], 1, -1 do
-                    local tile = self.tile_layers[layer_id][tile_id]
-                
-                    if (tile.x > self.camera_pos_x - (self.tilemapdata.tilewidth * self.mapdata.scale.x)) and
-                    (tile.x < self.camera_pos_x + 640) and
-                    (tile.y > self.camera_pos_y) and
-                    (tile.y < self.camera_pos_y + 480 + (self.tilemapdata.tileheight * self.mapdata.scale.y)) then
-                        if not tile.sprite then
-                            tile.sprite = self.CreateTileSprite(tile.tileset,tile.id,tile.x,tile.y,self.mapdata.internalname)
-                        end
-                        tile.sprite.sprite.SendToTop()
-                        tile.sprite.mask.SendToTop()
-                    else
-                        if tile.sprite then
-                            tile.sprite.sprite.Remove()
-                            tile.sprite.mask.Remove()
-                            tile.sprite = nil
-                        end
-                    end
-                end
-            elseif type(self.tile_layers[layer_id]) == "userdata" then
-                self.tile_layers[layer_id].SendToTop()
-            end
-        end
     end
 
     function self.UpdateCamera()
@@ -546,7 +549,7 @@ return (function()
 
         table.insert(self.mapdata.events,event)
     end
-    
+
     function self.GetEventRect(event)
         return self.rect(
                         (event.hitbox_offset.x * self.mapdata.scale.x) + event.x,
@@ -658,16 +661,17 @@ return (function()
         self.mapdata.internalname = mapname
         self.mapdata.events = {}
 
+
         for layer_id = 1, #self.tilemapdata.layers do
-            local current_layer = self.tilemapdata.layers[layer_id]
+            local current_data_layer = self.tilemapdata.layers[layer_id]
 
-            if current_layer.type == "tilelayer" then
-                local layer_tiles = {}
-                for y = 1, current_layer.height do
-                    for x = 1, current_layer.width do
-                        local current_tile_id = current_layer.data[((y - 1) * current_layer.width) + x]
+            if current_data_layer.type == "tilelayer" then
+                local current_layer = LayerHandler.CreateLayer("tiles","Tiles")
+
+                for y = 1, current_data_layer.height do
+                    for x = 1, current_data_layer.width do
+                        local current_tile_id = current_data_layer.data[((y - 1) * current_data_layer.width) + x]
                         if current_tile_id ~= 0 then
-
                             local tileset_id = self.GetTilesetFor(current_tile_id)
                             local tileset = self.tilemapdata.tilesets[tileset_id]
 
@@ -675,7 +679,7 @@ return (function()
                             local tile_height = tileset.tileheight
 
                             local x2 = ((x - 1) * (tile_width * self.mapdata.scale.x))
-                            local y2 = 480 - ((y - 1) * (tile_height * self.mapdata.scale.y)) + (current_layer.height - (480 / (tile_height * self.mapdata.scale.y))) * (tile_height * self.mapdata.scale.y)
+                            local y2 = 480 - ((y - 1) * (tile_height * self.mapdata.scale.y)) + (current_data_layer.height - (480 / (tile_height * self.mapdata.scale.y))) * (tile_height * self.mapdata.scale.y)
 
                             local tile = {}
 
@@ -684,10 +688,7 @@ return (function()
                             tile.y = y2
                             tile.id = current_tile_id
 
-
                             tile.sprite = nil
-
-
 
                             tile.animated = false
                             tile.animation_table = nil
@@ -704,15 +705,25 @@ return (function()
 
                             --local sprite = self.CreateTileSprite(tileset,current_tile_id,x2,y2,mapname)
 
-                            table.insert(layer_tiles,tile)
+                            table.insert(current_layer.tiles,tile)
+
+                            --table.insert(layer_tiles,tile)
                         end
                     end
                 end
-                table.insert(self.tile_layers,layer_tiles)
-            elseif current_layer.type == "objectgroup" and current_layer.name == "events" then
+            elseif current_data_layer.type == "imagelayer" then
+                local current_layer = LayerHandler.CreateLayer("image")
+
+                current_layer.sprite = CreateSprite("../Maps/" .. mapname .. "/" .. current_data_layer.image:sub(1, -5),"Tiles")
+                current_layer.sprite.SetPivot(0,1)
+                current_layer.sprite.x = current_data_layer.offsetx * self.mapdata.scale.x
+                current_layer.sprite.y = ((self.tilemapdata.height * self.tilemapdata.tileheight) - current_data_layer.offsety)*self.mapdata.scale.y
+                current_layer.sprite.Scale(self.mapdata.scale.x,self.mapdata.scale.y)
+
+            elseif current_data_layer.type == "objectgroup" and current_data_layer.name == "events" then
                 self.DEBUG("Loading events")
-                for object_id = 1, #current_layer.objects do
-                    local object = current_layer.objects[object_id]
+                for object_id = 1, #current_data_layer.objects do
+                    local object = current_data_layer.objects[object_id]
                     if object.name == "start" then
                         local object_x = object.x
                         local object_y = object.y + (object.height)
@@ -726,10 +737,10 @@ return (function()
                         self.LoadEvent(object)
                     end
                 end
-            elseif current_layer.type == "objectgroup" and current_layer.name == "collision" then
+            elseif current_data_layer.type == "objectgroup" and current_data_layer.name == "collision" then
 
-                for object_id = 1, #current_layer.objects do
-                    local object = current_layer.objects[object_id]
+                for object_id = 1, #current_data_layer.objects do
+                    local object = current_data_layer.objects[object_id]
                     if object.shape == "rectangle" then
                         self.DEBUG("Rectangle collision found at (" .. object.x * self.mapdata.scale.x .. ", " .. object.y * self.mapdata.scale.y .. ")")
 
@@ -737,7 +748,7 @@ return (function()
 
                         local x  = (object.x) * self.mapdata.scale.x
                         local x2 = (object.x + object.width) * self.mapdata.scale.x
-                        local y  = (flipped_y*self.mapdata.scale.y)
+                        local y  = (flipped_y * self.mapdata.scale.y)
                         local y2 = (flipped_y - object.height) * self.mapdata.scale.y
 
                         local rect = self.rect(x,x2,y2,y)
@@ -745,15 +756,15 @@ return (function()
                     elseif object.shape == "polygon" then
                         self.DEBUG("Triangle collision found")
 
-                        local x1 = object.polygon[1]["x"]*self.mapdata.scale.x
-                        local x2 = object.polygon[2]["x"]*self.mapdata.scale.x
-                        local x3 = object.polygon[3]["x"]*self.mapdata.scale.x
-                        local x4 = object.x*self.mapdata.scale.x
+                        local x1 = object.polygon[1]["x"] * self.mapdata.scale.x
+                        local x2 = object.polygon[2]["x"] * self.mapdata.scale.x
+                        local x3 = object.polygon[3]["x"] * self.mapdata.scale.x
+                        local x4 = object.x * self.mapdata.scale.x
 
-                        local y1 = (-object.polygon[1]["y"])*self.mapdata.scale.y
-                        local y2 = (-object.polygon[2]["y"])*self.mapdata.scale.y
-                        local y3 = (-object.polygon[3]["y"])*self.mapdata.scale.y
-                        local y4 = ((self.tilemapdata.height * self.tilemapdata.tileheight) - object.y)*self.mapdata.scale.y
+                        local y1 = (-object.polygon[1]["y"]) * self.mapdata.scale.y
+                        local y2 = (-object.polygon[2]["y"]) * self.mapdata.scale.y
+                        local y3 = (-object.polygon[3]["y"]) * self.mapdata.scale.y
+                        local y4 = ((self.tilemapdata.height * self.tilemapdata.tileheight) - object.y) * self.mapdata.scale.y
                         --local y4 = object.y * 2
 
                         self.DEBUG("(" .. x4 .. "," .. y4 .. ")")
@@ -762,18 +773,11 @@ return (function()
                         table.insert(self.collision_triangles,triangle)
                     end
                 end
-            elseif current_layer.type == "imagelayer" then
-                local image = CreateSprite("../Maps/" .. mapname .. "/" .. current_layer.image:sub(1, -5),"Tiles")
-                image.SetPivot(0,1)
-                image.x = current_layer.offsetx * self.mapdata.scale.x
-                image.y = ((self.tilemapdata.height * self.tilemapdata.tileheight) - current_layer.offsety)*self.mapdata.scale.y
-                image.Scale(self.mapdata.scale.x,self.mapdata.scale.y)
-                --table.insert(self.images,image)
-                table.insert(self.tile_layers,image)
             else
-                self.DEBUG("UNSUPPORTED LAYER TYPE: " .. current_layer.type)
+                self.DEBUG("UNSUPPORTED LAYER TYPE: " .. current_data_layer.type)
             end
         end
+
         if self.mapdata.OnLoad then self.mapdata.OnLoad() end
     end
 
@@ -869,7 +873,7 @@ return (function()
 
         self.player.sprite.x = self.player.x
         self.player.sprite.y = self.player.y
-        
+
         self.player.sprite.Scale(self.player.size[1],self.player.size[2])
 
 
@@ -1056,7 +1060,7 @@ return (function()
                 point_left = {b[1],b[2]}
                 point_right = {a[1],a[2]}
             end
-            
+
         else
             error("Collision triangle must be a right-triangle")
         end
@@ -1085,7 +1089,7 @@ return (function()
                 point_angle[1] = point_angle[1] - point_left[1]
                 point_left[1] = 0
             end
-            
+
             if point_left[2] < 0 or point_right[2] < 0 then
                 local offset = math.min(point_left[2], point_right[2])
                 point_right[2] = point_right[2] - offset
