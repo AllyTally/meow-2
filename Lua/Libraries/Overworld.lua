@@ -27,6 +27,7 @@ return (function()
         NPCHelper        = require "NPCHelper"
         BattleHandler    = require "BattleHandler"
         LayerHandler     = require "LayerHandler"
+        SaveMananger     = require "SaveMananger"
 
         -- Animation timer
         self.animationtimer = 0
@@ -1152,7 +1153,7 @@ return (function()
             if Input.Left > 0 then
                 self.turned = true
                 if ((Input.Up > 0)   and self.player.animation == "WalkUp"  ) or
-                ((Input.Down > 0) and self.player.animation == "WalkDown") then
+                   ((Input.Down > 0) and self.player.animation == "WalkDown") then
                     self.turned = false
                 end
                 if self.turned then
@@ -1164,7 +1165,7 @@ return (function()
             if (Input.Right > 0) and (Input.Left <= 0) then
                 self.turned = true
                 if ((Input.Up > 0)   and self.player.animation == "WalkUp"  ) or
-                ((Input.Down > 0) and self.player.animation == "WalkDown") then
+                   ((Input.Down > 0) and self.player.animation == "WalkDown") then
                     self.turned = false
                 end
                 if self.turned then
@@ -1175,7 +1176,7 @@ return (function()
             if Input.Up > 0 then
                 self.turned = true
                 if ((Input.Left > 0)  and self.player.animation == "WalkLeft" ) or
-                ((Input.Right > 0) and self.player.animation == "WalkRight") then
+                   ((Input.Right > 0) and self.player.animation == "WalkRight") then
                     self.turned = false
                 end
                 if self.turned then
@@ -1186,7 +1187,7 @@ return (function()
             if (Input.Down > 0) and (Input.Up <= 0) then
                 self.turned = true
                 if ((Input.Left > 0)  and self.player.animation == "WalkLeft" ) or
-                ((Input.Right > 0) and self.player.animation == "WalkRight") then
+                   ((Input.Right > 0) and self.player.animation == "WalkRight") then
                     self.turned = false
                 end
                 if self.turned then
