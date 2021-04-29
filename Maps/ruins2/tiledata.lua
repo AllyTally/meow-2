@@ -9,7 +9,7 @@ return {
   tilewidth = 20,
   tileheight = 20,
   nextlayerid = 7,
-  nextobjectid = 332,
+  nextobjectid = 333,
   properties = {},
   tilesets = {
     {
@@ -618,6 +618,19 @@ return {
           properties = {
             ["name"] = "toriel_walkaway"
           }
+        },
+        {
+          id = 332,
+          name = "savepoint",
+          type = "",
+          shape = "rectangle",
+          x = 80,
+          y = 89,
+          width = 20,
+          height = 20,
+          rotation = 0,
+          visible = true,
+          properties = {}
         }
       }
     }

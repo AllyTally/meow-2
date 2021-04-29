@@ -22,12 +22,23 @@ function main()
     self.solid = false
 
     function self.OnInteract()
-        local text = self.properties["text"]
-        text = text:gsub("\\r","\r")
-        text = text:gsub("\\n","\n")
+        local text_list = {}
 
-        Overworld.SpawnSimpleTextbox(text)
+        if self.properties["pages"] and self.properties["pages"] > 1 then
+            for page = 1, self.properties["pages"] do
+                local text = self.properties["text" .. page]
+                text = text:gsub("\\r","\r")
+                text = text:gsub("\\n","\n")
+                table.insert(text_list, text)
+            end
+        else
+            local text = self.properties["text"]
+            text = text:gsub("\\r","\r")
+            text = text:gsub("\\n","\n")
+            table.insert(text_list, text)
+        end
 
+        Overworld.SpawnSimpleTextbox(text_list, nil)
     end
 
 

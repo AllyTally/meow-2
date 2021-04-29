@@ -8,6 +8,10 @@ return (function()
     end
 
     function self.ReadSave(save_name)
+        if not Misc.FileExists("Saves/" .. save_name) then
+            return false
+        end
+
         local file = Misc.OpenFile("Saves/" .. save_name, "r")
         
         all_lines = ""

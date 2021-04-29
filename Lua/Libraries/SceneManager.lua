@@ -38,13 +38,21 @@ return (function()
     function self.LockPlayerMovement()
         Overworld.cutscene_active = true
     end
-    
+
     function self.Delay(frames)
         self.delay_timer = frames
         coroutine.yield()
     end
-    
-    
+
+    function self.Lock()
+        coroutine.yield()
+    end
+
+    function self.Unlock()
+        coroutine.resume(self.current_coroutine)
+    end
+
+
     function self.Start(cutscene,silence_warning)
         if self.current_coroutine and coroutine.status(self.current_coroutine) ~= "dead" then
             if not silence_warning then

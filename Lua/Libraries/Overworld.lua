@@ -27,7 +27,7 @@ return (function()
         NPCHelper        = require "NPCHelper"
         BattleHandler    = require "BattleHandler"
         LayerHandler     = require "LayerHandler"
-        SaveMananger     = require "SaveMananger"
+        SaveManager      = require "SaveManager"
 
         -- Animation timer
         self.animationtimer = 0
@@ -78,6 +78,8 @@ return (function()
         self.pre_battle_audio = "empty"
         self.pre_battle_time = 0
 
+        self.last_save = nil
+
 
         -- Create settings to be changed in EncounterStarting
         self.backgroundpath = "black" -- Black background by default
@@ -95,9 +97,23 @@ return (function()
             OverworldStarting()
         end
 
+        local loaded = self.LoadGame()
+        if loaded then
+            player = self.last_save.player
+            map = self.last_save.map
+            self.playtime = self.last_save.playtime
+        end
+
         self.LoadMap(map)
         self.LoadPlayer(player)
 
+        if loaded then
+            self.player.lv   = self.last_save.lv
+            self.player.xp   = self.last_save.xp
+            self.player.gold = self.last_save.gold
+            Player.lv        = self.last_save.lv
+            Player.hp        = Player.maxhp
+        end
 
         self.camera_pos_x = 0
         self.camera_pos_y = 0
@@ -105,6 +121,10 @@ return (function()
         self.inbattle = false
 
         self.UpdateBattle = nil
+
+        self.playtime = 0
+
+        self.save_data = {}
     end
 
     function self.DEBUG(text)
@@ -113,13 +133,50 @@ return (function()
         end
     end
 
+    function self.SaveGame()
+        self.last_save = {
+            playtime   = self.playtime,
+            player     = self.player.internalname,
+            map        = self.mapdata.internalname,
+            lv         = self.player.lv,
+            xp         = self.player.xp,
+            gold       = self.player.gold,
+            playername = self.player.name,
+            roomname   = self.mapdata.name and self.mapdata.name or "",
+            save_data  = self.save_data
+        }
+        SaveManager.WriteSave("file0", self.last_save)
+    end
+
+    function self.LoadGame()
+        self.last_save = SaveManager.ReadSave("file0")
+        if not self.last_save then
+            self.last_save = {
+                playername = "EMPTY",
+                playtime   = 0,
+                lv         = 0,
+                xp         = 0,
+                roomname   = "--",
+                save_data = {}
+            }
+            self.save_data = {}
+            return false
+        end
+        self.save_data = self.last_save.save_data
+        return true
+    end
+
     -- Main update function of the module
     function self.Update()
+        self.playtime = self.playtime + Time.dt
         if not self.inbattle then
             if self.debug_mode then
                 if Input.GetKey("F10") == 1 then
                     self.cutscene_active = false
                     self.debug_ignore_collision = not self.debug_ignore_collision
+                end
+                if Input.GetKey("F9") == 1 then
+                    Audio.Stop()
                 end
             end
 
@@ -1197,7 +1254,7 @@ return (function()
             end
 
             if self.murderdancing then
-                if ((self.animationtimer % 4) >= 2) then
+                if ((self.animationtimer % 4) >= 4) then
                     self.player.dir = 2
                     self.player.animation = "WalkUp"
                 else

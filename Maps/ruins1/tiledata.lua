@@ -9,7 +9,7 @@ return {
   tilewidth = 20,
   tileheight = 20,
   nextlayerid = 13,
-  nextobjectid = 345,
+  nextobjectid = 346,
   properties = {},
   tilesets = {
     {
@@ -702,6 +702,19 @@ return {
             ["x"] = 150,
             ["y"] = 20
           }
+        },
+        {
+          id = 345,
+          name = "savepoint",
+          type = "",
+          shape = "rectangle",
+          x = 150,
+          y = 380,
+          width = 20,
+          height = 20,
+          rotation = 0,
+          visible = true,
+          properties = {}
         }
       }
     }
