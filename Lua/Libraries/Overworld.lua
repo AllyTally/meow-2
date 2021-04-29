@@ -97,6 +97,8 @@ return (function()
             OverworldStarting()
         end
 
+        self.playtime = 0
+
         local loaded = self.LoadGame()
         if loaded then
             player = self.last_save.player
@@ -121,8 +123,6 @@ return (function()
         self.inbattle = false
 
         self.UpdateBattle = nil
-
-        self.playtime = 0
 
         self.save_data = {}
     end
