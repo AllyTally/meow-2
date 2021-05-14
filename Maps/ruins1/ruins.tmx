@@ -139,7 +139,7 @@
   </object>
  </objectgroup>
  <objectgroup id="5" name="events">
-  <object id="309" name="start" x="160" y="420"/>
+  <object id="309" name="start" x="150" y="198" width="20" height="20"/>
   <object id="342" name="door" x="140" y="80" width="20" height="20">
    <properties>
     <property name="map" value="ruins2"/>
@@ -154,6 +154,6 @@
     <property name="y" type="int" value="20"/>
    </properties>
   </object>
-  <object id="345" name="savepoint" x="150" y="380" width="20" height="20"/>
+  <object id="345" name="savepoint" x="150" y="175" width="20" height="20"/>
  </objectgroup>
 </map>

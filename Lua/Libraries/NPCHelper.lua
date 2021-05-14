@@ -28,6 +28,17 @@ return (function()
         event.animationtimer = event.animationtimer + 1
     end
 
+    function self.CalculateDir(x,y,x2,y2)
+        local diff = { x - x2, y - y2 }
+        local angle = (math.atan2(diff[1], diff[2]) + (math.pi*2)) % (math.pi*2)
+        local dir = 2
+        if     angle > math.pi/4   and angle <= 3*math.pi/4 then dir = 4
+        elseif angle > 3*math.pi/4 and angle <= 5*math.pi/4 then dir = 8
+        elseif angle > 5*math.pi/4 and angle <= 7*math.pi/4 then dir = 6
+        end
+        return dir
+    end
+
     function self.FacePlayer(event)
         if Overworld.player.y > event.y + (event.depth_offset * Overworld.mapdata.scale.y) and Overworld.player.x + Overworld.player.hitbox_size.x > event.x + event.hitbox_offset.x and Overworld.player.x < event.x + (event.hitbox_size.x + event.hitbox_offset.x) * Overworld.mapdata.scale.x then
             event.animation = "IdleUp"
@@ -38,6 +49,22 @@ return (function()
         elseif Overworld.player.x < event.x then
             event.animation = "IdleLeft"
         end
+    end
+    
+    function self.WalkTo(event,x,y,speed,animation)
+        if not speed then
+            speed = 3
+        end
+        if not animation then
+            -- Figure out the animation automagically?
+        end
+        event.animation = animation
+        event.walking_speed = speed
+        event.target_x = x
+        event.target_y = y
+        event.walking = true
+        table.insert(self.walking_events,event)
+        SceneManager.Lock() -- Lock the scene if there's a cutscene active
     end
     
     function self.WalkToX(event,x,speed)
@@ -55,7 +82,7 @@ return (function()
         end
 
         table.insert(self.walking_events,event)
-        coroutine.yield()
+        SceneManager.Lock()
     end
 
     function self.WalkToY(event,y,speed)
@@ -73,7 +100,7 @@ return (function()
         end
 
         table.insert(self.walking_events,event)
-        coroutine.yield()
+        SceneManager.Lock()
     end
     
     function self.Update()
@@ -87,7 +114,7 @@ return (function()
                         event.walking_x = false
                         event.animation = "IdleLeft"
                         table.remove(self.walking_events,event_id)
-                        coroutine.resume(SceneManager.current_coroutine)
+                        SceneManager.Unlock()
                     end
                 else
                     event.x = event.x + event.walking_speed
@@ -96,7 +123,7 @@ return (function()
                         event.walking_x = false
                         event.animation = "IdleRight"
                         table.remove(self.walking_events,event_id)
-                        coroutine.resume(SceneManager.current_coroutine)
+                        SceneManager.Unlock()
                     end
                 end
             elseif event.walking_y then
@@ -107,7 +134,7 @@ return (function()
                         event.walking_y = false
                         event.animation = "IdleDown"
                         table.remove(self.walking_events,event_id)
-                        coroutine.resume(SceneManager.current_coroutine)
+                        SceneManager.Unlock()
                     end
                 else
                     event.y = event.y + event.walking_speed
@@ -116,7 +143,7 @@ return (function()
                         event.walking_y = false
                         event.animation = "IdleUp"
                         table.remove(self.walking_events,event_id)
-                        coroutine.resume(SceneManager.current_coroutine)
+                        SceneManager.Unlock()
                     end
                 end
             end

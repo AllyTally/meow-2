@@ -22,12 +22,12 @@ return (function()
         CreateLayer("Fader","Textbox")
         CreateLayer("SuperTop","Fader")
 
-        OverworldTextbox = require "OverworldTextbox"
-        SceneManager     = require "SceneManager"
-        NPCHelper        = require "NPCHelper"
-        BattleHandler    = require "BattleHandler"
-        LayerHandler     = require "LayerHandler"
-        SaveManager      = require "SaveManager"
+        OverworldTextbox = require "Libraries/OverworldTextbox"
+        SceneManager     = require "Libraries/SceneManager"
+        NPCHelper        = require "Libraries/NPCHelper"
+        BattleHandler    = require "Libraries/BattleHandler"
+        LayerHandler     = require "Libraries/LayerHandler"
+        SaveManager      = require "Libraries/SaveManager"
 
         -- Animation timer
         self.animationtimer = 0
@@ -80,7 +80,6 @@ return (function()
 
         self.last_save = nil
 
-
         -- Create settings to be changed in EncounterStarting
         self.backgroundpath = "black" -- Black background by default
 
@@ -99,6 +98,32 @@ return (function()
 
         self.playtime = 0
 
+        self.LoadAndProcess()
+
+        self.camera_pos_x = 0
+        self.camera_pos_y = 0
+
+        self.inbattle = false
+
+        self.UpdateBattle = nil
+
+        self.save_data = {}
+
+        self.menu_open = false
+
+        self.lock_player_input = false
+        self.can_open_menu = true
+        
+        self.current_menu_option = 0
+    end
+
+    function self.DEBUG(text)
+        if self.debug_mode then
+            --DEBUG(text)
+        end
+    end
+
+    function self.LoadAndProcess()
         local loaded = self.LoadGame()
         if loaded then
             player = self.last_save.player
@@ -110,59 +135,61 @@ return (function()
         self.LoadPlayer(player)
 
         if loaded then
-            self.player.lv   = self.last_save.lv
-            self.player.xp   = self.last_save.xp
-            self.player.gold = self.last_save.gold
-            Player.lv        = self.last_save.lv
-            Player.hp        = Player.maxhp
-        end
-
-        self.camera_pos_x = 0
-        self.camera_pos_y = 0
-
-        self.inbattle = false
-
-        self.UpdateBattle = nil
-
-        self.save_data = {}
-    end
-
-    function self.DEBUG(text)
-        if self.debug_mode then
-            --DEBUG(text)
+            self.player.lv    = self.last_save.lv
+            self.player.xp    = self.last_save.xp
+            self.player.gold  = self.last_save.gold
+            self.player.maxhp = self.last_save.maxhp
+            self.player.hp    = self.last_save.maxhp
+            Player.lv         = self.last_save.lv
+            Player.hp         = self.last_save.maxhp
         end
     end
 
     function self.SaveGame()
+        if BeforeSave then BeforeSave() end
         self.last_save = {
             playtime   = self.playtime,
             player     = self.player.internalname,
             map        = self.mapdata.internalname,
             lv         = self.player.lv,
             xp         = self.player.xp,
+            maxhp      = self.player.maxhp,
             gold       = self.player.gold,
             playername = self.player.name,
             roomname   = self.mapdata.name and self.mapdata.name or "",
             save_data  = self.save_data
         }
+        if BeforeSaveWritten then BeforeSaveWritten() end
         SaveManager.WriteSave("file0", self.last_save)
+        if AfterSave then AfterSave() end
+    end
+
+    function self.CreateNewSave()
+        self.save_data = {}
+        if BeforeSaveCreation then BeforeSaveCreation() end
+        self.last_save = {
+            playername = "EMPTY",
+            playtime   = 0,
+            lv         = 0,
+            xp         = 0,
+            maxhp      = 0,
+            roomname   = "--",
+            save_data = self.save_data
+        }
+        if AfterSaveCreation then AfterSaveCreation() end
     end
 
     function self.LoadGame()
+        if BeforeLoad then BeforeLoad() end
+
         self.last_save = SaveManager.ReadSave("file0")
         if not self.last_save then
-            self.last_save = {
-                playername = "EMPTY",
-                playtime   = 0,
-                lv         = 0,
-                xp         = 0,
-                roomname   = "--",
-                save_data = {}
-            }
-            self.save_data = {}
+            self.CreateNewSave()
+            if AfterLoad then AfterLoad(true) end -- There was no save file
             return false
         end
         self.save_data = self.last_save.save_data
+        if AfterLoad then AfterLoad(false) end -- There was a save file
         return true
     end
 
@@ -172,19 +199,24 @@ return (function()
         if not self.inbattle then
             if self.debug_mode then
                 if Input.GetKey("F10") == 1 then
-                    self.cutscene_active = false
+                    self.lock_player_input = false
+                    self.can_open_menu = true
                     self.debug_ignore_collision = not self.debug_ignore_collision
                 end
                 if Input.GetKey("F9") == 1 then
                     Audio.Stop()
                 end
+                if Input.GetKey("L") == 1 then
+                    loaded = self.LoadGame()
+                    self.UnloadMap()
+                    self.UnloadPlayer()
+                    self.LoadAndProcess()
+                end
             end
 
             local old_x = self.player.x
             local old_y = self.player.y
-            if not self.cutscene_active and not self.transitioning_to_room and not self.transitioning_to_battle then
-                self.TakeInput()
-            end
+            self.TakeInput()
             self.UpdatePlayerSprite(self.player.x ~= old_x or self.player.y ~= old_y or self.murderdancing)
             if self.mapdata.Update then self.mapdata.Update() end
             self.UpdateEvents()
@@ -222,6 +254,8 @@ return (function()
         self.transitioning_from_battle = true
         self.transition_timer = 0
         self.transition_fader.alpha = 0
+        self.lock_player_input = false
+        self.can_open_menu = true
         self.player.sprite.layer = "Player"
         if self.pre_battle_audio ~= "empty" then
             Audio.LoadFile(self.pre_battle_audio)
@@ -232,6 +266,8 @@ return (function()
 
     function self.EnterBattle(battle)
         self.transitioning_to_battle = true
+        self.lock_player_input = true
+        self.can_open_menu = false
         self.transition_timer = 0
 
         self.transition_fader.alpha = 1
@@ -347,6 +383,8 @@ return (function()
         local old_Update = Update
 
         Player.lv = self.player.lv
+        Player.maxhp = self.player.maxhp
+        Player.hp = self.player.hp
 
         Update = nil
         dofile(modpath.modPath .. "/Lua/Encounters/" .. battle .. ".lua")
@@ -495,6 +533,8 @@ return (function()
             if self.transition_fader.alpha >= 1 then
                 self.transitioning_to_room = false
                 self.transitioning_from_room = true
+                self.lock_player_input = false
+                self.can_open_menu = true
 
                 if self.mapdata.BeforeUnload then self.mapdata.BeforeUnload() end
                 self.UnloadMap()
@@ -518,6 +558,8 @@ return (function()
         if self.transitioning_to_room then return end
         if self.mapdata.OnLeave then self.mapdata.OnLeave() end
         self.transitioning_to_room = true
+        self.lock_player_input = true
+        self.can_open_menu = false
         self.transitioning_from_room = false
         self.map_to_load = map
         self.new_map_x = x
@@ -531,8 +573,10 @@ return (function()
     end
 
     function self.UpdateCamera()
-        self.camera_pos_x = math.min((self.tilemapdata.width  * self.tilemapdata.tilewidth  * self.mapdata.scale.x) - 640,math.max(0,self.player.x - 320))
-        self.camera_pos_y = math.min((self.tilemapdata.height * self.tilemapdata.tileheight * self.mapdata.scale.y) - 480,math.max(0,self.player.y - 240))
+        local player_x = self.player.x + 20
+        local player_y = self.player.y + 40
+        self.camera_pos_x = math.min((self.tilemapdata.width  * self.tilemapdata.tilewidth  * self.mapdata.scale.x) - 640,math.max(0,player_x - 320))
+        self.camera_pos_y = math.min((self.tilemapdata.height * self.tilemapdata.tileheight * self.mapdata.scale.y) - 480,math.max(0,player_y - 240))
         self.transition_fader.x = self.camera_pos_x + 320
         self.transition_fader.y = self.camera_pos_y + 240
         Misc.MoveCameraTo(self.camera_pos_x,self.camera_pos_y)
@@ -579,7 +623,8 @@ return (function()
         event.properties = object.properties
 
         if event.sprite_path then 
-            event.sprites_folder = "../" .. folder .. "/Sprites/"
+            event.sprites_folder = ".." .. folder .. "/Sprites/"
+            --error(event.sprites_folder .. event.sprite_path)
             event.sprite = CreateSprite(event.sprites_folder .. event.sprite_path, "Objects")
             event.sprite.xscale = self.mapdata.scale.x
             event.sprite.yscale = self.mapdata.scale.y
@@ -590,6 +635,7 @@ return (function()
             event.sprite.x = event.x + (event.sprite_offset.x * self.mapdata.scale.x ) + ((event.data.width * self.mapdata.scale.x) / 2) + 0.01
             event.sprite.y = event.y + (event.sprite_offset.y * self.mapdata.scale.y ) + 0.01
         end
+
 
         event.removed = false
         function event.Destroy()
@@ -636,7 +682,7 @@ return (function()
                 end
             end
 
-            if event.OnInteract and not event.removed and not self.cutscene_active then
+            if event.OnInteract and not event.removed and not self.cutscene_active and not self.menu_open then
                 if Input.Confirm == 1 then
 
                     local x_inc_1 = (self.player.dir == 0) and self.player.interaction_distance or 0
@@ -706,7 +752,6 @@ return (function()
         self.debug_ignore_collision = false
         self.DEBUG("Attemping to load map \"" .. mapname .. "\"")
         local modpath = self.GetModName()
-
         if Misc.DirExists("Maps") then
             self.mapdata     = dofile(modpath.modPath .. "/Maps/" .. mapname .. "/map.lua")
             self.tilemapdata = dofile(modpath.modPath .. "/Maps/" .. mapname .. "/tiledata.lua")
@@ -942,6 +987,12 @@ return (function()
 
     end
 
+    function self.UnloadPlayer()
+        self.player.sprite.Remove()
+        self.player.debugpoint.Remove()
+        self.player = nil
+    end
+
     function self.GetPlayerSpeed()
         if self.debug_mode then
             if Input.GetKey("Backspace") > 0 then
@@ -951,8 +1002,146 @@ return (function()
         return self.player.speed
     end
 
+    function self.OpenMenu()
+        self.menu_open = true
+        self.lock_player_input = true
+        self.can_open_menu = true
+        Audio.PlaySound("menumove")
+
+        self.menu_top_rect_border = CreateSprite("px", "Textbox")
+        self.menu_top_rect_border.SetPivot(0, 0)
+        self.menu_top_rect_border.Scale(142, 110)
+
+        self.menu_top_rect = CreateSprite("px", "Textbox")
+        self.menu_top_rect.SetPivot(0, 0)
+        self.menu_top_rect.Scale(142 - 12, 110 - 12)
+        self.menu_top_rect.color = {0, 0, 0}
+        self.menu_top_rect.SetParent(self.menu_top_rect_border)
+        self.menu_top_rect.SetAnchor(0, 0)
+        self.menu_top_rect.MoveTo(6, 6)
+
+        self.menu_top_name        = CreateText("[instant][font:uidialogmedspacesave]" .. self.player.name, {0,0}, 640, "Textbox")
+        self.menu_top_name        .progressmode = "none"
+        self.menu_top_name        .HideBubble()
+        self.menu_top_name        .SetParent(self.menu_top_rect)
+        self.menu_top_name        .MoveTo(9,70)
+
+        self.menu_top_lv          = CreateText("[instant][font:menu][charspacing:2]LV[charspacing:0]  [charspacing:2]" .. self.player.lv, {0,0}, 999, "Textbox")
+        self.menu_top_lv          .progressmode = "none"
+        self.menu_top_lv          .HideBubble()
+        self.menu_top_lv          .SetParent(self.menu_top_rect)
+        self.menu_top_lv          .MoveTo(9,46)
+
+        self.menu_top_hp          = CreateText("[instant][font:menu][charspacing:2]HP[charspacing:0]  [charspacing:2]" .. self.player.hp, {0,0}, 999, "Textbox")
+        self.menu_top_hp          .progressmode = "none"
+        self.menu_top_hp          .HideBubble()
+        self.menu_top_hp          .SetParent(self.menu_top_rect)
+        self.menu_top_hp          .MoveTo(9,46 - 18)
+
+        self.menu_top_gold        = CreateText("[instant][font:menu][charspacing:2]G [charspacing:0]  [charspacing:2]" .. self.player.gold, {0,0}, 999, "Textbox")
+        self.menu_top_gold        .progressmode = "none"
+        self.menu_top_gold        .HideBubble()
+        self.menu_top_gold        .SetParent(self.menu_top_rect)
+        self.menu_top_gold        .MoveTo(9,46 - 18 - 18)
+
+
+        self.menu_bottom_rect_border = CreateSprite("px", "Textbox")
+        self.menu_bottom_rect_border.SetPivot(0, 0)
+        self.menu_bottom_rect_border.Scale(142, 148)
+
+        self.menu_bottom_rect = CreateSprite("px", "Textbox")
+        self.menu_bottom_rect.SetPivot(0, 0)
+        self.menu_bottom_rect.Scale(142 - 12, 148 - 12)
+        self.menu_bottom_rect.color = {0, 0, 0}
+        self.menu_bottom_rect.SetParent(self.menu_bottom_rect_border)
+        self.menu_bottom_rect.SetAnchor(0, 0)
+        self.menu_bottom_rect.MoveTo(6, 6)
+
+        self.menu_bottom_item        = CreateText("[instant][font:uidialogmedspacesave][color:808080]ITEM", {0,0}, 640, "Textbox")
+        self.menu_bottom_item        .progressmode = "none"
+        self.menu_bottom_item        .HideBubble()
+        self.menu_bottom_item        .SetParent(self.menu_bottom_rect)
+        self.menu_bottom_item        .MoveTo(47, 96)
+
+        self.menu_bottom_stat        = CreateText("[instant][font:uidialogmedspacesave]STAT", {0,0}, 640, "Textbox")
+        self.menu_bottom_stat        .progressmode = "none"
+        self.menu_bottom_stat        .HideBubble()
+        self.menu_bottom_stat        .SetParent(self.menu_bottom_rect)
+        self.menu_bottom_stat        .MoveTo(47, 96 - 36)
+
+        self.menu_bottom_cell        = CreateText("[instant][font:uidialogmedspacesave]CELL", {0,0}, 640, "Textbox")
+        self.menu_bottom_cell        .progressmode = "none"
+        self.menu_bottom_cell        .HideBubble()
+        self.menu_bottom_cell        .SetParent(self.menu_bottom_rect)
+        self.menu_bottom_cell        .MoveTo(47, 96 - 36 - 36)
+        
+        self.menu_bottom_soul        = CreateSprite("spr_heartsmall", "Textbox")
+        self.menu_bottom_soul        .Scale(2,2)
+        self.menu_bottom_soul        .SetParent(self.menu_bottom_rect)
+        self.menu_bottom_soul        .SetPivot(0,0)
+        self.menu_bottom_soul        .MoveTo(-47, 28 - (self.current_menu_option * 36))
+
+        local player_y = self.player.y + 40
+        local top = (player_y - self.camera_pos_y) >= 230
+
+        self.menu_bottom_rect_border.MoveToAbs(Overworld.camera_pos_x + 32, Overworld.camera_pos_y + 164)
+        if top then
+            self.menu_top_rect_border.MoveToAbs(Overworld.camera_pos_x + 32, Overworld.camera_pos_y + 318)
+        else
+            self.menu_top_rect_border.MoveToAbs(Overworld.camera_pos_x + 32, Overworld.camera_pos_y + 48)
+        end
+
+    end
+
+    function self.CloseMenu()
+        self.menu_open = false
+        self.lock_player_input = false
+
+        self.menu_top_rect_border.Remove() -- Everything else is parented!
+        self.menu_bottom_rect_border.Remove()
+    end
+
+    function self.TakeMenuInput()
+        if self.can_open_menu then
+            if Input.Menu == 1 then
+                self.OpenMenu()
+                self.can_open_menu = false
+                return
+            end
+        end
+
+        if self.menu_open then
+            if Input.Down == 1 then
+                if self.current_menu_option < 2 then
+                    Audio.PlaySound("menumove")
+                    self.current_menu_option = self.current_menu_option + 1
+                    self.menu_bottom_soul.MoveTo(-47, 28 - (self.current_menu_option * 36))
+                end
+            end
+
+            if Input.Up == 1 then
+                if self.current_menu_option > 0 then
+                    Audio.PlaySound("menumove")
+                    self.current_menu_option = self.current_menu_option - 1
+                    self.menu_bottom_soul.MoveTo(-47, 28 - (self.current_menu_option * 36))
+                end
+            end
+
+            if Input.Menu == 1 or Input.Cancel == 1 then
+                self.CloseMenu()
+                self.can_open_menu = true
+            end
+        end
+    end
+
     function self.TakeInput()
         -- Let's try and recreate Undertale's controls faithfully. Oh no.
+
+        self.TakeMenuInput()
+        
+        if self.lock_player_input then
+            return
+        end
 
         if Input.Left > 0 then
             self.MovePlayer(-self.GetPlayerSpeed(),0)
@@ -1199,13 +1388,13 @@ return (function()
         self.player.sprite.y = self.player.y
 
 
-        if self.cutscene_active or self.transitioning_to_room or self.transitioning_to_battle then
+        if self.lock_player_input then
             moving = false
         end
 
         -- Animation code... this is very ugly, but it's accurate.
 
-        if not self.cutscene_active and not self.transitioning_to_room and not self.transitioning_to_battle then
+        if not self.lock_player_input then
 
             if Input.Left > 0 then
                 self.turned = true

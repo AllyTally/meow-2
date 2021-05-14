@@ -45,42 +45,42 @@ function main()
         self.saved = false
         self.background_border = CreateSprite("px","Textbox")
         self.background_border.Scale(424,174)
-        self.background_border.MoveTo(320,275)
+        self.background_border.MoveTo(Overworld.camera_pos_x + 320, Overworld.camera_pos_y + 275)
         self.background = CreateSprite("px","Textbox")
         self.background.Scale(412,162)
-        self.background.MoveTo(320,275)
+        self.background.MoveTo(Overworld.camera_pos_x + 320,Overworld.camera_pos_y + 275)
         self.background.color = {0,0,0}
 
-        self.text_name = CreateText("[instant][font:uidialogmedspacesave]" .. Overworld.last_save.playername, {141,314}, 999, "Textbox")
+        self.text_name = CreateText("[instant][font:uidialogmedspacesave]" .. Overworld.last_save.playername, {Overworld.camera_pos_x + 141, Overworld.camera_pos_y + 314}, 999, "Textbox")
         self.text_name.progressmode = "none"
         self.text_name.HideBubble()
 
-        self.text_lv = CreateText("[instant][font:uidialogmedspacesave]LV " .. Overworld.last_save.lv, {141 + 160,314}, 999, "Textbox")
+        self.text_lv = CreateText("[instant][font:uidialogmedspacesave]LV " .. Overworld.last_save.lv, {Overworld.camera_pos_x + 141 + 160,Overworld.camera_pos_y + 314}, 999, "Textbox")
         self.text_lv.progressmode = "none"
         self.text_lv.HideBubble()
 
         playtime = self.CalcTime()
 
-        self.text_time = CreateText("[instant][font:uidialogmedspacesave]" .. playtime, {141 + 312,314}, 999, "Textbox")
+        self.text_time = CreateText("[instant][font:uidialogmedspacesave]" .. playtime, {Overworld.camera_pos_x + 141 + 312,Overworld.camera_pos_y + 314}, 999, "Textbox")
         self.text_time.progressmode = "none"
         self.text_time.HideBubble()
 
-        self.text_location = CreateText("[instant][font:uidialogmedspacesave]" .. Overworld.last_save.roomname, {141,314 - 40}, 999, "Textbox")
+        self.text_location = CreateText("[instant][font:uidialogmedspacesave]" .. Overworld.last_save.roomname, {Overworld.camera_pos_x + 141,Overworld.camera_pos_y + 314 - 40}, 999, "Textbox")
         self.text_location.progressmode = "none"
         self.text_location.HideBubble()
 
-        self.text_save = CreateText("[instant][font:uidialogmedspacesave]Save", {141 + 30,214}, 999, "Textbox")
+        self.text_save = CreateText("[instant][font:uidialogmedspacesave]Save", {Overworld.camera_pos_x + 141 + 30,Overworld.camera_pos_y + 214}, 999, "Textbox")
         self.text_save.progressmode = "none"
         self.text_save.HideBubble()
 
-        self.text_return = CreateText("[instant][font:uidialogmedspacesave]Return", {141 + 30 + 180,214}, 999, "Textbox")
+        self.text_return = CreateText("[instant][font:uidialogmedspacesave]Return", {Overworld.camera_pos_x + 141 + 30 + 180,Overworld.camera_pos_y + 214}, 999, "Textbox")
         self.text_return.progressmode = "none"
         self.text_return.HideBubble()
 
         self.choicer_soul = CreateSprite("spr_heartsmall", "Textbox")
         self.choicer_soul.Scale(2,2)
         self.choicer_soul.color = { 1, 0, 0 }
-        self.choicer_soul.MoveTo(142 + 9,216 + 9)
+        self.choicer_soul.MoveTo(Overworld.camera_pos_x + 142 + 9,Overworld.camera_pos_y + 216 + 9)
 
         self.choice = 0
     end
@@ -103,7 +103,7 @@ function main()
                 if Input.Left == 1 or Input.Right == 1 then
                     self.choice = 1 - self.choice
                     Audio.PlaySound("menumove")
-                    self.choicer_soul.MoveTo(142 + 9 + (180 * self.choice),216 + 9)
+                    self.choicer_soul.MoveTo(Overworld.camera_pos_x + 142 + 9 + (180 * self.choice),Overworld.camera_pos_y + 216 + 9)
                 elseif Input.Confirm == 1 then
                     if self.choice == 0 then
                         Overworld.SaveGame()
@@ -120,7 +120,7 @@ function main()
                         self.text_location.SetText("[instant][font:uidialogmedspacesave]" .. Overworld.last_save.roomname)
 
                         local playtime = self.CalcTime()
-                        self.text_time.SetText("[instant][font:uidialogmedspacesave]" .. playtime, {141 + 312,314}, 999, "Textbox")
+                        self.text_time.SetText("[instant][font:uidialogmedspacesave]" .. playtime)
 
                         self.text_save.SetText("[instant][font:uidialogmedspacesave]File saved.")
 
@@ -145,7 +145,7 @@ function main()
     end
     function self.OnInteract()
         Audio.PlaySound("healsound")
-        Player.hp = Player.maxhp
+        Overworld.player.hp = Overworld.player.maxhp
 
         local text_list = {}
 

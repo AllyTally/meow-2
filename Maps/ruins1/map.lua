@@ -8,6 +8,8 @@ return (function()
         y = 2
     }
 
+    self.name = "Ruins - Entrance"
+
     function self.BeforeLoad()   end -- Called right before the map is loaded
     function self.OnLoad()       end -- Called right after the map is loaded
     function self.AfterEnter()   end -- Called after the fade-in transition is finished

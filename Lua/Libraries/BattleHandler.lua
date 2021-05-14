@@ -153,6 +153,7 @@ function self.StartFlee()
             Audio.PlaySound("levelup")
         end
     else
+        self.CheckLevel()
         BattleDialogue({self.possible_flee_text[math.random(#self.possible_flee_text)],"[noskip][func:callback][starcolor:000000][instant]"})
     end
 end
@@ -160,6 +161,7 @@ end
 function self.CheckLevel()
     Overworld.player.xp = Overworld.player.xp + self.xp
     Overworld.player.gold = Overworld.player.gold + self.gold
+    Overworld.player.hp = Player.hp
     if (Overworld.player.lv > 20) then
         Player.lv = Overworld.player.lv
         return false
@@ -172,6 +174,8 @@ function self.CheckLevel()
             end
             Overworld.player.lv = i
             Player.lv = i
+            Overworld.player.hp = Player.hp
+            Overworld.player.maxhp = Player.maxhp
             return true
         end
     end

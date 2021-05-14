@@ -13,6 +13,10 @@ return (function()
         if self.current_coroutine then
             if coroutine.status(self.current_coroutine) == "dead" then
                 Overworld.cutscene_active = false
+                Overworld.lock_player_input = false
+                Overworld.can_open_menu = true
+                self.current_coroutine = nil
+                return
             end
             
             if coroutine.status(self.current_coroutine) == "suspended" then
@@ -32,11 +36,13 @@ return (function()
     end
     
     function self.UnlockPlayerMovement()
-        Overworld.cutscene_active = false
+        Overworld.lock_player_input = false
     end
 
     function self.LockPlayerMovement()
         Overworld.cutscene_active = true
+        Overworld.lock_player_input = true
+        Overworld.can_open_menu = false
     end
 
     function self.Delay(frames)
@@ -45,11 +51,15 @@ return (function()
     end
 
     function self.Lock()
-        coroutine.yield()
+        if self.current_coroutine then
+            coroutine.yield()
+        end
     end
 
     function self.Unlock()
-        coroutine.resume(self.current_coroutine)
+        if self.current_coroutine then
+            coroutine.resume(self.current_coroutine)
+        end
     end
 
 
@@ -84,6 +94,8 @@ return (function()
         end
 
         Overworld.cutscene_active = true
+        Overworld.lock_player_input = true
+        Overworld.can_open_menu = false
         self.current_coroutine = coroutine.create(func)
         coroutine.resume(self.current_coroutine)
     end
@@ -99,8 +111,6 @@ return (function()
         OverworldTextbox.SetText(text,top,portrait,options)
         coroutine.yield()
     end
-
-
 
     return self 
 end)()
